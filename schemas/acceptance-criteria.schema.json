@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "acceptance-criteria.schema.json",
+  "title": "Acceptance Criterion",
+  "type": "object",
+  "required": ["id", "slice", "statement", "behaviors"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^AC-[0-9]{4}$" },
+    "slice": { "type": "string", "pattern": "^SLC-[0-9]{4}$" },
+    "statement": { "type": "string", "minLength": 10 },
+    "behaviors": {
+      "type": "array", "items": { "type": "string", "pattern": "^BHV-[0-9]{4}$" },
+      "description": "SEAM S1.4 — non-empty under oracle_strategy=characterization (v1). Left open (may be empty) for a future specification oracle, where acceptance criteria carry the scope directly."
+    },
+    "failure_path": { "type": "boolean" }
+  }
+}

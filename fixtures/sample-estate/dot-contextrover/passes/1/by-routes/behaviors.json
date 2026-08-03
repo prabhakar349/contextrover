@@ -1,0 +1,11 @@
+[
+  { "summary": "Rejects an order when requested quantity is zero or negative", "source_services": ["orders-svc"],
+    "interfaces": ["POST /orders"], "kind": "validation", "failure_path": true,
+    "evidence": [{"source":"code","locator":"services/orders-svc/app.py:14"}], "confidence": "high" },
+  { "summary": "Publishes an order.created event after an order is placed", "source_services": ["orders-svc"],
+    "target_services": ["orders-svc"], "interfaces": ["order.created"], "kind": "emission",
+    "evidence": [{"source":"code","locator":"services/orders-svc/app.py:20"}], "confidence": "high" },
+  { "summary": "Creates an invoice with status OPEN when a new order.created event is consumed", "source_services": ["billing-svc"],
+    "interfaces": ["POST /invoices", "order.created"], "kind": "state-transition",
+    "evidence": [{"source":"code","locator":"services/billing-svc/main.go:20"}], "confidence": "high" }
+]

@@ -1,0 +1,29 @@
+{
+  "//": "Agent roster per stage, keyed by oracle_strategy (seam S1.6). v1 ships one key: 'characterization'. Adding a specification oracle later means adding a second top-level key here plus its elicitation agents — no change to any command (12-extension-seams.md §1).",
+  "characterization": {
+    "0": { "stage_name": "Engagement Intake", "agents": [] },
+    "1": {
+      "stage_name": "Domain Discovery",
+      "agents": [
+        "sync-surface-extractor",
+        "async-surface-extractor",
+        "behavior-extractor",
+        "dependency-mapper",
+        "consumer-mapper",
+        "call-sequence-analyst",
+        "change-coupling-analyst",
+        "divergence-detector",
+        "redaction-policy-assessor"
+      ],
+      "framings": ["by-routes", "by-tests", "by-call-sites"],
+      "default_k": 3
+    },
+    "2": { "stage_name": "Strategic Design", "agents": ["boundary-proposer"], "default_k": 3 },
+    "3": { "stage_name": "Solution Outline", "agents": [] },
+    "4": { "stage_name": "Delivery Roadmap", "agents": [] },
+    "5": { "stage_name": "Tactical Design", "agents": ["spec-critic"] },
+    "6": { "stage_name": "Verification Design", "agents": ["test-adversary"] },
+    "7": { "stage_name": "Execution", "agents": [] },
+    "8": { "stage_name": "Transition", "agents": [] }
+  }
+}

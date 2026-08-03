@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "variation-policy.schema.json",
+  "title": "Variation Policy",
+  "type": "object",
+  "required": ["id", "context", "driving_dimension", "variants", "evidence"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^VAR-[0-9]{4}$" },
+    "context": { "type": "string", "pattern": "^CTX-[0-9]{4}$" },
+    "driving_dimension": { "type": "string", "description": "What actually varies: channel, product, tenant, mechanism." },
+    "divergences": { "type": "array", "items": { "type": "string", "pattern": "^DVG-[0-9]{4}$" },
+                      "description": "Divergence records classified 'policy' that this variation formalizes." },
+    "variants": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["value", "description"],
+        "properties": {
+          "value": { "type": "string" },
+          "description": { "type": "string" },
+          "behavior_id": { "type": "string", "pattern": "^BHV-[0-9]{4}$" }
+        }
+      }
+    },
+    "decided_by": { "type": "string" },
+    "decided_at": { "type": "string", "format": "date-time" },
+    "rationale": { "type": "string" },
+    "evidence": { "$ref": "behavior.schema.json#/$defs/evidence" }
+  }
+}

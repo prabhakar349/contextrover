@@ -1,0 +1,16 @@
+{
+  "id": "ADJ-0001",
+  "stage": 1,
+  "k": 3,
+  "framings": ["by-routes", "by-tests", "by-call-sites"],
+  "candidates": [
+    { "candidate_id": "Creates a new invoice with status OPEN after consuming order", "found_by": ["by-tests"], "partition": "one", "decision": "reject", "rationale": "duplicate of the by-routes finding describing the same real behavior (billing-svc creating an invoice on order.created); kept that one, no separate ID issued for this candidate" },
+    { "candidate_id": "Creates an invoice with status OPEN when a new order.created", "found_by": ["by-routes"], "partition": "one", "decision": "accept", "rationale": "kept as the canonical record of this behavior (now BHV-0002)" },
+    { "candidate_id": "Publishes an order.created event after an order is placed", "found_by": ["by-routes"], "partition": "one", "decision": "accept", "rationale": "well-evidenced despite being found by only one framing; async surfaces are structurally only visible to the by-routes framing here" },
+    { "candidate_id": "Returns shipment tracking status for a given shipment id", "found_by": ["by-call-sites"], "partition": "one", "decision": "accept", "rationale": "thin evidence (medium confidence, single framing) but a real Behavior; kept and flagged for a stronger evidence pass in a later Stage 1 re-run" },
+    { "candidate_id": "status", "found_by": ["by-routes", "by-tests"], "partition": "some", "decision": "accept", "rationale": "genuine divergence between order lifecycle and invoice lifecycle status fields; classified false-cognate in inventory/divergences.json" }
+  ],
+  "kind": "adjudication",
+  "decided_by": "Jane Doe",
+  "decided_at": "2026-08-01T11:00:00Z"
+}

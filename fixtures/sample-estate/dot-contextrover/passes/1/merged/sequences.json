@@ -1,0 +1,16 @@
+[
+  {
+    "evidence": [
+      {
+        "locator": "services/orders-svc/app.py:20",
+        "source": "code"
+      }
+    ],
+    "frequency": 5,
+    "id": "SEQ-0001",
+    "steps": [
+      "IFC-SYNC-0003",
+      "IFC-ASYNC-0001"
+    ]
+  }
+]

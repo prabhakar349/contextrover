@@ -1,0 +1,97 @@
+[
+  {
+    "confidence": "high",
+    "evidence": [
+      {
+        "locator": "tests/test_invoices.go:15",
+        "source": "test"
+      }
+    ],
+    "interfaces": [
+      "IFC-SYNC-0002",
+      "IFC-ASYNC-0001"
+    ],
+    "kind": "state-transition",
+    "source_services": [
+      "billing-svc"
+    ],
+    "summary": "Creates a new invoice with status OPEN after consuming order.created"
+  },
+  {
+    "confidence": "high",
+    "evidence": [
+      {
+        "locator": "services/billing-svc/main.go:20",
+        "source": "code"
+      }
+    ],
+    "interfaces": [
+      "IFC-SYNC-0002",
+      "IFC-ASYNC-0001"
+    ],
+    "kind": "state-transition",
+    "source_services": [
+      "billing-svc"
+    ],
+    "summary": "Creates an invoice with status OPEN when a new order.created event is consumed"
+  },
+  {
+    "confidence": "high",
+    "evidence": [
+      {
+        "locator": "services/orders-svc/app.py:20",
+        "source": "code"
+      }
+    ],
+    "interfaces": [
+      "IFC-ASYNC-0001"
+    ],
+    "kind": "emission",
+    "source_services": [
+      "orders-svc"
+    ],
+    "summary": "Publishes an order.created event after an order is placed",
+    "target_services": [
+      "orders-svc"
+    ]
+  },
+  {
+    "confidence": "high",
+    "evidence": [
+      {
+        "locator": "services/orders-svc/app.py:14",
+        "source": "code"
+      },
+      {
+        "locator": "tests/test_orders.py:8",
+        "source": "test"
+      }
+    ],
+    "failure_path": true,
+    "interfaces": [
+      "IFC-SYNC-0003"
+    ],
+    "kind": "validation",
+    "source_services": [
+      "orders-svc"
+    ],
+    "summary": "Rejects an order when requested quantity is zero or negative"
+  },
+  {
+    "confidence": "medium",
+    "evidence": [
+      {
+        "locator": "services/shipping-svc/Shipping.java:10",
+        "source": "code"
+      }
+    ],
+    "interfaces": [
+      "IFC-SYNC-0001"
+    ],
+    "kind": "routing",
+    "source_services": [
+      "shipping-svc"
+    ],
+    "summary": "Returns shipment tracking status for a given shipment id"
+  }
+]

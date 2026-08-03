@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "retirement.schema.json",
+  "title": "Legacy Surface Retirement Entry",
+  "type": "object",
+  "required": ["interface_id", "status"],
+  "properties": {
+    "interface_id":     { "type": "string", "pattern": "^IFC-(SYNC|ASYNC)-[0-9]{4}$" },
+    "known_consumers":  { "type": "array", "items": { "type": "string" } },
+    "status":           { "enum": ["active", "deprecated", "zero-traffic", "retired"] },
+    "sunset_date":      { "type": ["string", "null"], "format": "date" },
+    "sunset_authority": { "type": ["string", "null"], "description": "Who can mandate this date. Null means the interface is effectively permanent." },
+    "last_traffic":     { "type": ["string", "null"], "format": "date-time" },
+    "zero_traffic_days": { "type": "integer" },
+    "migration_guide":  { "type": ["string", "null"] }
+  }
+}

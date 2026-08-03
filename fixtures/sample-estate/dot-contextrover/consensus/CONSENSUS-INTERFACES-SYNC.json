@@ -1,0 +1,43 @@
+{
+  "agreement_rate": 0.3333,
+  "candidates": [
+    {
+      "candidate_id": "GET /shipments/{id}",
+      "decision": "triage",
+      "found_by": [
+        "by-routes"
+      ],
+      "partition": "one"
+    },
+    {
+      "candidate_id": "POST /invoices",
+      "decision": "triage",
+      "found_by": [
+        "by-routes",
+        "by-tests"
+      ],
+      "partition": "some"
+    },
+    {
+      "candidate_id": "POST /orders",
+      "decision": "accept",
+      "found_by": [
+        "by-call-sites",
+        "by-routes",
+        "by-tests"
+      ],
+      "partition": "all"
+    }
+  ],
+  "decided_at": "2026-08-02T13:42:31Z",
+  "decided_by": "consensus.py (mechanical)",
+  "framings": [
+    "by-call-sites",
+    "by-routes",
+    "by-tests"
+  ],
+  "id": "ADJ-0000",
+  "k": 3,
+  "kind": "consensus-run",
+  "stage": 1
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "interface.schema.json",
+  "title": "Interface Record",
+  "type": "object",
+  "required": ["id", "kind", "name", "owning_service", "evidence"],
+  "properties": {
+    "id":   { "type": "string", "pattern": "^IFC-(SYNC|ASYNC)-[0-9]{4}$" },
+    "kind": { "enum": ["sync", "async-published", "async-consumed"] },
+    "name": { "type": "string" },
+    "owning_service": { "type": "string" },
+    "protocol": { "enum": ["http", "grpc", "kafka", "sqs", "pubsub", "amqp", "other"] },
+
+    "sync": {
+      "type": "object",
+      "properties": {
+        "method": { "type": "string" },
+        "path":   { "type": "string" },
+        "request_schema":  { "type": "string" },
+        "response_schema": { "type": "string" },
+        "status_codes":    { "type": "array", "items": { "type": "integer" } }
+      }
+    },
+
+    "async": {
+      "type": "object",
+      "properties": {
+        "topic":              { "type": "string" },
+        "payload_schema":     { "type": "string" },
+        "schema_registry_id": { "type": "string" },
+        "partition_key":      { "type": "string" },
+        "ordering_guarantee": { "enum": ["none", "per-partition", "global", "unknown"] },
+        "delivery":           { "enum": ["at-most-once", "at-least-once", "exactly-once", "unknown"] },
+        "idempotency_key":    { "type": "string" },
+        "retry_policy":       { "type": "string" },
+        "dlq":                { "type": "string" },
+        "retention":          { "type": "string" },
+        "consumer_groups":    { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "consumers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["identifier", "evidence_source", "confidence"],
+        "properties": {
+          "identifier":      { "type": "string" },
+          "evidence_source": { "enum": ["access-log", "consumer-group", "schema-registry", "code-reference", "documentation", "declared", "none"] },
+          "confidence":      { "enum": ["high", "medium", "low", "unknown"] },
+          "last_seen":       { "type": "string", "format": "date" }
+        }
+      }
+    },
+    "consumers_complete": {
+      "type": "boolean",
+      "description": "False means unknown consumers may exist. For async interfaces this defaults to false unless registry AND consumer-group evidence are both present."
+    },
+    "evidence": { "$ref": "behavior.schema.json#/$defs/evidence" }
+  }
+}

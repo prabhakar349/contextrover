@@ -1,0 +1,6 @@
+[
+  { "kind": "async-published", "name": "order.created", "owning_service": "orders-svc", "protocol": "kafka",
+    "async": {"topic":"order.created","partition_key":"id","ordering_guarantee":"per-partition","delivery":"at-least-once"},
+    "consumers": [{"identifier":"billing-svc","evidence_source":"code-reference","confidence":"high"}], "consumers_complete": false,
+    "evidence": [{"source":"code","locator":"services/orders-svc/app.py:20"}] }
+]

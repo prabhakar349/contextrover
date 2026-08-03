@@ -1,0 +1,12 @@
+{
+  "id": "SLC-0002",
+  "name": "Invoice creation",
+  "workstream": "WS-0003",
+  "context": "CTX-0002",
+  "oracle_strategy": "characterization",
+  "behaviors": ["BHV-0002"],
+  "use_cases": ["Create an invoice for a new order"],
+  "state": "Outlined",
+  "harness_lock": null,
+  "approvals": []
+}

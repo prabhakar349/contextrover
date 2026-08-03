@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sequences.schema.json",
+  "title": "Call-Sequence Record",
+  "type": "object",
+  "required": ["id", "steps", "frequency", "evidence"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^SEQ-[0-9]{4}$" },
+    "steps": {
+      "type": "array", "minItems": 2,
+      "items": { "type": "string", "pattern": "^IFC-(SYNC|ASYNC)-[0-9]{4}$" },
+      "description": "Ordered interface calls forming a repeated multi-call pattern (REQ-07). These are the requirements for the new API."
+    },
+    "frequency": { "type": "integer", "minimum": 1 },
+    "evidence": { "$ref": "behavior.schema.json#/$defs/evidence" }
+  }
+}

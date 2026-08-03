@@ -1,0 +1,6 @@
+[
+  { "kind": "sync", "name": "POST /orders", "owning_service": "orders-svc", "protocol": "http",
+    "sync": {"method":"POST","path":"/orders"},
+    "consumers": [{"identifier":"web-app","evidence_source":"code-reference","confidence":"medium"}], "consumers_complete": false,
+    "evidence": [{"source":"code","locator":"services/web-client/orders.js:3"}] }
+]

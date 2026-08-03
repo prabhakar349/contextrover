@@ -1,0 +1,57 @@
+{
+  "agreement_rate": 0.0,
+  "candidates": [
+    {
+      "candidate_id": "Creates a new invoice with status OPEN after consuming order",
+      "decision": "triage",
+      "found_by": [
+        "by-tests"
+      ],
+      "partition": "one"
+    },
+    {
+      "candidate_id": "Creates an invoice with status OPEN when a new order.created",
+      "decision": "triage",
+      "found_by": [
+        "by-routes"
+      ],
+      "partition": "one"
+    },
+    {
+      "candidate_id": "Publishes an order.created event after an order is placed",
+      "decision": "triage",
+      "found_by": [
+        "by-routes"
+      ],
+      "partition": "one"
+    },
+    {
+      "candidate_id": "Rejects an order when requested quantity is zero or negative",
+      "decision": "triage",
+      "found_by": [
+        "by-routes",
+        "by-tests"
+      ],
+      "partition": "some"
+    },
+    {
+      "candidate_id": "Returns shipment tracking status for a given shipment id",
+      "decision": "triage",
+      "found_by": [
+        "by-call-sites"
+      ],
+      "partition": "one"
+    }
+  ],
+  "decided_at": "2026-08-02T13:42:31Z",
+  "decided_by": "consensus.py (mechanical)",
+  "framings": [
+    "by-call-sites",
+    "by-routes",
+    "by-tests"
+  ],
+  "id": "ADJ-0000",
+  "k": 3,
+  "kind": "consensus-run",
+  "stage": 1
+}

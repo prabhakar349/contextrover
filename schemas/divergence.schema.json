@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "divergence.schema.json",
+  "title": "Divergence Record",
+  "type": "object",
+  "required": ["id", "concept", "variants", "evidence"],
+  "properties": {
+    "id":      { "type": "string", "pattern": "^DVG-[0-9]{4}$" },
+    "concept": { "type": "string", "description": "The single concept the services disagree about" },
+    "variants": {
+      "type": "array", "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["service", "description"],
+        "properties": {
+          "service":     { "type": "string" },
+          "behavior_id": { "type": "string", "pattern": "^BHV-[0-9]{4}$",
+                            "description": "Optional at Stage 1 -- a discovery-agent candidate legitimately cannot know a Behavior ID that doesn't exist yet (REQ-31a assigns IDs downstream). Omit rather than guess; Stage 2 adjudication fills it in." },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "classification": {
+      "enum": ["unclassified", "policy", "false-cognate", "defect"],
+      "description": "policy = model as explicit domain variation; false-cognate = things that look like one concept but belong to different bounded contexts; defect = preserve, log, fix separately AFTER migration"
+    },
+    "driving_dimension": { "type": "string", "description": "What actually varies: channel, product, tenant, mechanism" },
+    "decision_owner":    { "type": "string" },
+    "decided_at":        { "type": "string", "format": "date-time" },
+    "rationale":         { "type": "string" },
+    "projection":        { "type": "object", "properties": {
+                             "adapter":     { "type": "string" },
+                             "external_id": { "type": "string" },
+                             "status":      { "enum": ["pending", "projected", "failed"] } } },
+    "evidence": { "$ref": "behavior.schema.json#/$defs/evidence" }
+  }
+}

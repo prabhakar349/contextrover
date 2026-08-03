@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "graph-node.schema.json",
+  "title": "Graph Node",
+  "type": "object",
+  "required": ["id", "type", "label"],
+  "properties": {
+    "id": { "type": "string" },
+    "type": { "enum": ["Service", "Interface", "Behavior", "Context", "Aggregate", "Consumer",
+                        "Divergence", "Test", "Commit", "Topic", "Adapter"] },
+    "label": { "type": "string" },
+    "confidence": { "enum": ["high", "medium", "low", "unknown"] },
+    "agreement": { "type": "number", "minimum": 0, "maximum": 1 },
+    "stage_added": { "type": "integer", "minimum": 0, "maximum": 8,
+                      "description": "09-glossary.md drops 'Phase' entirely; this is 'stage_added', correcting 08-knowledge-and-reporting.md's example field name 'phase_added' per glossary precedence." },
+    "attributes": { "type": "object", "description": "Type-specific passthrough fields." }
+  }
+}

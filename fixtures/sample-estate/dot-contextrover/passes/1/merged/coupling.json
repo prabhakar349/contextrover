@@ -1,0 +1,13 @@
+[
+  {
+    "co_change_count": 4,
+    "entity_a": "orders-svc",
+    "entity_b": "billing-svc",
+    "evidence": [
+      {
+        "locator": "fixture commit log",
+        "source": "commit-history"
+      }
+    ]
+  }
+]

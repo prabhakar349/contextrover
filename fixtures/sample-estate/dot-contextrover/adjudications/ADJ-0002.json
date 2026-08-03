@@ -1,0 +1,15 @@
+{
+  "id": "ADJ-0002",
+  "stage": 2,
+  "k": 3,
+  "framings": ["by-routes", "by-tests", "by-call-sites"],
+  "candidates": [
+    { "candidate_id": "CTX-Ordering", "found_by": ["by-routes", "by-tests", "by-call-sites"], "partition": "all", "decision": "accept", "rationale": "linguistic + invariant containment both hold; orders-svc owns the Order aggregate cleanly" },
+    { "candidate_id": "CTX-Billing", "found_by": ["by-routes", "by-tests", "by-call-sites"], "partition": "all", "decision": "accept", "rationale": "billing-svc owns Invoice; customer-supplier relationship to Ordering via order.created" },
+    { "candidate_id": "CTX-Shipping", "found_by": ["by-call-sites"], "partition": "one", "decision": "accept", "rationale": "thin today but a real, separable subdomain; kept as its own Context rather than folded into Ordering" }
+  ],
+  "kind": "adjudication",
+  "decided_by": "Jane Doe",
+  "decided_at": "2026-08-01T12:00:00Z",
+  "agreement_rate": 0.85
+}

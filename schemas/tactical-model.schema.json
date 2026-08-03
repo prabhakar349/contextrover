@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tactical-model.schema.json",
+  "title": "Tactical Model",
+  "type": "object",
+  "required": ["slice", "aggregates"],
+  "properties": {
+    "slice": { "type": "string" },
+    "aggregates": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "root", "invariants"],
+        "properties": {
+          "name":        { "type": "string" },
+          "root":        { "type": "string" },
+          "entities":    { "type": "array", "items": { "type": "string" } },
+          "value_objects": { "type": "array", "items": { "type": "string" } },
+          "invariants":  { "type": "array", "minItems": 1,
+                           "items": { "type": "object",
+                                      "required": ["statement", "behaviors"],
+                                      "properties": {
+                                        "statement": { "type": "string" },
+                                        "behaviors": { "type": "array", "items": { "type": "string", "pattern": "^BHV-[0-9]{4}$" } } } },
+                           "description": "At least one. Aggregates without invariants are data bags." }
+        }
+      }
+    },
+    "domain_events": { "type": "array", "items": { "type": "object",
+                        "properties": { "name": {"type":"string"}, "aggregate": {"type":"string"} } },
+                       "description": "Named in past tense" },
+    "commands":      { "type": "array", "items": { "type": "object",
+                        "properties": { "name": {"type":"string"}, "aggregate": {"type":"string"} } },
+                       "description": "Named in the imperative" },
+    "policies":      { "type": "array", "items": { "type": "string" } }
+  }
+}

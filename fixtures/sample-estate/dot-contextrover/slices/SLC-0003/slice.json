@@ -1,0 +1,12 @@
+{
+  "id": "SLC-0003",
+  "name": "Shipment tracking",
+  "workstream": "WS-0004",
+  "context": "CTX-0003",
+  "oracle_strategy": "characterization",
+  "behaviors": ["BHV-0003"],
+  "use_cases": ["Look up shipment status"],
+  "state": "Outlined",
+  "harness_lock": null,
+  "approvals": []
+}

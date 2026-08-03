@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ContextRover Program Report</title>
+<style>
+body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; margin: 2rem; color: #111; line-height: 1.5; }
+h1 { margin-bottom: 0.2rem; }
+.meta { color: #666; font-size: 0.85rem; }
+.headline { font-size: 1.1rem; }
+section { margin-bottom: 2.5rem; }
+table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+th, td { border: 1px solid #ccc; padding: 0.4rem 0.6rem; text-align: left; font-size: 0.9rem; }
+th { background: #f0f0f0; cursor: pointer; }
+.unknown { color: #a55; font-style: italic; }
+.traced { border-bottom: 1px dotted #999; cursor: help; }
+.note { color: #666; font-size: 0.85rem; }
+.stage-rail { display: flex; gap: 0.3rem; flex-wrap: wrap; margin: 0.8rem 0; }
+.stage-pill { padding: 0.2rem 0.5rem; border-radius: 4px; background: #eee; font-size: 0.8rem; }
+.stage-complete { background: #cfc; }
+.stage-in-progress { background: #ffe; }
+.stage-gate-failed { background: #fcc; }
+.gauges { display: flex; gap: 2rem; margin-top: 1rem; }
+.gauge-label { font-size: 0.85rem; margin-bottom: 0.2rem; }
+.gauge-value { font-size: 0.85rem; margin-top: 0.2rem; }
+.class-unclassified { color: #c00; }
+.filter { margin: 0.5rem 0; padding: 0.3rem; width: 100%; max-width: 20rem; }
+@media print { body { margin: 0.5in; } .filter { display: none; } }
+</style>
+</head>
+<body>
+
+  <section id="header">
+    <h1>ContextRover Program Report</h1>
+    <p class="meta">Generated 2026-08-03T01:55:39Z · .contextrover git SHA: <span class="unknown">unknown (no .contextrover git history at render time)</span>
+       · <em>current as of the last gate, not live</em></p>
+    <p class="headline"><span class="traced" title="inventory/behaviors.json + inventory/interfaces.json">3</span>
+       services in &rarr; <span class="traced" title="model/contexts.json">3</span> proposed out</p>
+    <div class="stage-rail"><span class="stage-pill stage-complete" title="state.json stages.0">S0: complete</span><span class="stage-pill stage-complete" title="state.json stages.1">S1: complete</span><span class="stage-pill stage-complete" title="state.json stages.2">S2: complete</span><span class="stage-pill stage-complete" title="state.json stages.3">S3: complete</span><span class="stage-pill stage-not-started" title="state.json stages.4">S4: not-started</span><span class="stage-pill stage-not-started" title="state.json stages.5">S5: not-started</span><span class="stage-pill stage-not-started" title="state.json stages.6">S6: not-started</span><span class="stage-pill stage-not-started" title="state.json stages.7">S7: not-started</span><span class="stage-pill stage-not-started" title="state.json stages.8">S8: not-started</span></div>
+    <div class="gauges">
+      
+    <div class="gauge">
+      <div class="gauge-label">Build Stream conformity</div>
+      <svg width="200" height="18" viewBox="0 0 200 18" role="img" aria-label="Build Stream conformity"><rect x="0" y="0" width="200" height="18" fill="#e5e5e5"/></svg>
+      <div class="gauge-value"><span class="unknown">unknown (no coverage/retirement data yet)</span></div>
+    </div>
+      
+    <div class="gauge">
+      <div class="gauge-label">Consumer Migration adoption</div>
+      <svg width="200" height="18" viewBox="0 0 200 18" role="img" aria-label="Consumer Migration adoption"><rect x="0" y="0" width="200" height="18" fill="#e5e5e5"/><rect x="0" y="0" width="0.0" height="18" fill="#3b6"/></svg>
+      <div class="gauge-value"><span class="traced" title="retirement.json">0.0%</span></div>
+    </div>
+    </div>
+    <p class="note">These two gauges are reported separately and never blended into one number (REQ-13).</p>
+  </section>
+
+  <section id="services">
+    <h2>Service inventory</h2>
+    <input class="filter" type="text" placeholder="Filter services..." data-table="services-table">
+    <table id="services-table">
+      <thead><tr>
+        <th data-sort="text">Service</th><th data-sort="text">Language</th><th data-sort="text">Repository</th>
+        <th data-sort="num">Sync IFCs</th><th data-sort="num">Async IFCs</th><th data-sort="num">Behaviors</th>
+        <th data-sort="text">Proposed context</th>
+      </tr></thead>
+      <tbody><tr><td>billing-svc</td><td>python, go, java</td><td><a href="fixtures/sample-estate/services">fixtures/sample-estate/services</a></td><td><span class="traced" title="inventory/interfaces.json">1</span></td><td><span class="traced" title="inventory/interfaces.json">0</span></td><td><span class="traced" title="inventory/behaviors.json">1</span></td><td>CTX-0002</td></tr><tr><td>orders-svc</td><td>python, go, java</td><td><a href="fixtures/sample-estate/services">fixtures/sample-estate/services</a></td><td><span class="traced" title="inventory/interfaces.json">1</span></td><td><span class="traced" title="inventory/interfaces.json">1</span></td><td><span class="traced" title="inventory/behaviors.json">2</span></td><td>CTX-0001</td></tr><tr><td>shipping-svc</td><td>python, go, java</td><td><a href="fixtures/sample-estate/services">fixtures/sample-estate/services</a></td><td><span class="traced" title="inventory/interfaces.json">1</span></td><td><span class="traced" title="inventory/interfaces.json">0</span></td><td><span class="traced" title="inventory/behaviors.json">1</span></td><td>CTX-0003</td></tr></tbody>
+    </table>
+  </section>
+
+  <section id="timeline">
+    <h2>Stage timeline</h2>
+    <table>
+      <thead><tr><th>Stage</th><th>Status</th><th>Started</th><th>Completed</th>
+        <th>Gate result</th><th>Artifacts</th><th>Operator</th></tr></thead>
+      <tbody><tr><td>Stage 0</td><td>complete</td><td>2026-08-01T09:00:00Z</td><td>2026-08-01T09:30:00Z</td><td>exit <span class="traced" title="gates.jsonl">0</span> (validate-artifacts.py)</td><td><span class="traced" title="state.json">1</span></td><td>Jane Doe</td></tr><tr><td>Stage 1</td><td>complete</td><td>2026-08-01T10:00:00Z</td><td>2026-08-01T11:00:00Z</td><td>exit <span class="traced" title="gates.jsonl">0</span> (trace-lint.py)</td><td><span class="traced" title="state.json">6</span></td><td>Jane Doe</td></tr><tr><td>Stage 2</td><td>complete</td><td>2026-08-01T11:30:00Z</td><td>2026-08-01T12:30:00Z</td><td>exit <span class="traced" title="gates.jsonl">0</span> (trace-lint.py)</td><td><span class="traced" title="state.json">2</span></td><td>Jane Doe</td></tr><tr><td>Stage 3</td><td>complete</td><td>2026-08-01T13:00:00Z</td><td>2026-08-01T14:00:00Z</td><td>exit <span class="traced" title="gates.jsonl">0</span> (trace-lint.py)</td><td><span class="traced" title="state.json">4</span></td><td>Jane Doe</td></tr><tr><td>Stage 4</td><td>not-started</td><td>—</td><td>—</td><td><span class="unknown">unknown (no gate run recorded yet)</span></td><td><span class="traced" title="state.json">0</span></td><td>unknown</td></tr><tr><td>Stage 5</td><td>not-started</td><td>—</td><td>—</td><td><span class="unknown">unknown (no gate run recorded yet)</span></td><td><span class="traced" title="state.json">0</span></td><td>unknown</td></tr><tr><td>Stage 6</td><td>not-started</td><td>—</td><td>—</td><td><span class="unknown">unknown (no gate run recorded yet)</span></td><td><span class="traced" title="state.json">0</span></td><td>unknown</td></tr><tr><td>Stage 7</td><td>not-started</td><td>—</td><td>—</td><td><span class="unknown">unknown (no gate run recorded yet)</span></td><td><span class="traced" title="state.json">0</span></td><td>unknown</td></tr><tr><td>Stage 8</td><td>not-started</td><td>—</td><td>—</td><td><span class="unknown">unknown (no gate run recorded yet)</span></td><td><span class="traced" title="state.json">0</span></td><td>unknown</td></tr></tbody>
+    </table>
+  </section>
+
+  <section id="coverage">
+    <h2>Coverage</h2>
+    <p>Behaviors: <span class="traced" title="slices/*/verification/coverage.json">0</span> passing of
+       <span class="traced" title="slices/*/verification/coverage.json">0</span> covered.</p>
+    <p>Happy-path: <span class="traced" title="slices/*/verification/coverage.json">0</span> /
+       <span class="traced" title="slices/*/verification/coverage.json">0</span>
+       &nbsp;·&nbsp; Failure-path: <span class="traced" title="slices/*/verification/coverage.json">0</span> /
+       <span class="traced" title="slices/*/verification/coverage.json">0</span>
+       <span class="note">(reported separately — a suite complete only on happy paths is the characteristic silent failure)</span></p>
+    <h3>Ensemble agreement distribution</h3>
+    <svg width="240" height="110" viewBox="0 0 240 110" role="img" aria-label="Ensemble agreement distribution" title="consensus/*.json + adjudications/*.json"><rect x="0" y="66" width="60" height="14" fill="#369" title="found-by-all: 3"/><text x="30.0" y="98" font-size="11" text-anchor="middle">found-by-all</text><text x="30.0" y="62" font-size="11" text-anchor="middle">3</text><rect x="80" y="62" width="60" height="18" fill="#369" title="found-by-some: 4"/><text x="110.0" y="98" font-size="11" text-anchor="middle">found-by-some</text><text x="110.0" y="58" font-size="11" text-anchor="middle">4</text><rect x="160" y="0" width="60" height="80" fill="#369" title="found-by-one: 17"/><text x="190.0" y="98" font-size="11" text-anchor="middle">found-by-one</text><text x="190.0" y="-4" font-size="11" text-anchor="middle">17</text></svg>
+  </section>
+<section id="divergences"><h2>Divergences</h2><h3 class="class-unclassified">unclassified (<span class="traced" title="inventory/divergences.json">0</span>)</h3><table><thead><tr><th>ID</th><th>Concept</th><th>Decision owner</th><th>Tracked issue</th></tr></thead><tbody><tr><td colspan=4>(none)</td></tr></tbody></table><h3 class="">policy (<span class="traced" title="inventory/divergences.json">0</span>)</h3><table><thead><tr><th>ID</th><th>Concept</th><th>Decision owner</th><th>Tracked issue</th></tr></thead><tbody><tr><td colspan=4>(none)</td></tr></tbody></table><h3 class="">false-cognate (<span class="traced" title="inventory/divergences.json">1</span>)</h3><table><thead><tr><th>ID</th><th>Concept</th><th>Decision owner</th><th>Tracked issue</th></tr></thead><tbody><tr><td>DVG-0001</td><td>status</td><td>Jane Doe</td><td>—</td></tr></tbody></table><h3 class="">defect (<span class="traced" title="inventory/divergences.json">0</span>)</h3><table><thead><tr><th>ID</th><th>Concept</th><th>Decision owner</th><th>Tracked issue</th></tr></thead><tbody><tr><td colspan=4>(none)</td></tr></tbody></table></section>
+
+  <section id="risks">
+    <h2>Risks</h2>
+    <p>Unresolved high risks: <span class="traced" title="intake.json">1</span></p>
+    <table><thead><tr><th>ID</th><th>Statement</th><th>Blocks gate</th></tr></thead>
+      <tbody><tr><td>R1</td><td>Unknown event consumers cannot be enumerated for order.created beyond what code evidence shows; any legacy topic may have readers not visible here.</td><td>consumer-migration-workstream</td></tr></tbody></table>
+    <p class="note">Interfaces with sunset_authority: null (effectively permanent):
+      <span class="traced" title="retirement.json">0</span> — the leading indicator the
+      Consumer Migration Stream will never finish.</p>
+  </section>
+
+  <section id="waypoints">
+    <h2>Migration Waypoints</h2>
+    <p class="note">Extension beyond the base spec pack — dated, team-attributable checkpoints on top of the Retirement Register.</p>
+    <p>At-risk or missed: <span class="traced" title="migration-waypoints.json">1</span></p>
+    <table><thead><tr><th>ID</th><th>Name</th><th>Target date</th><th>Teams</th><th>Interfaces</th><th>Status</th></tr></thead>
+      <tbody><tr class=""><td>WP-0001</td><td>Billing team off legacy POST /invoices</td><td>2026-09-30</td><td>Billing team</td><td>IFC-SYNC-0002</td><td>pending</td></tr><tr class="class-unclassified"><td>WP-0002</td><td>Shipping team off legacy GET /shipments/{id}</td><td>2026-08-15</td><td>Shipping team</td><td>IFC-SYNC-0001</td><td>at-risk</td></tr></tbody></table>
+  </section>
+
+  <section id="retirement">
+    <h2>Retirement register</h2>
+    <table>
+      <thead><tr><th>Interface</th><th>Known consumers</th><th>Status</th><th>Sunset date</th>
+        <th>Sunset authority</th><th>Last traffic</th><th>Zero-traffic days</th></tr></thead>
+      <tbody><tr><td>IFC-SYNC-0002</td><td>billing-svc internal callers</td><td>active</td><td>2026-09-30</td><td>Jane Doe</td><td>2026-08-01T00:00:00Z</td><td>0</td></tr><tr><td>IFC-SYNC-0001</td><td>none recorded</td><td>active</td><td>2026-10-31</td><td>Jane Doe</td><td>2026-08-01T00:00:00Z</td><td>0</td></tr></tbody>
+    </table>
+  </section>
+<script type="application/json" id="report-data">{
+  "generated_at": "2026-08-03T01:55:39Z",
+  "git_sha": null,
+  "state": {
+    "plugin_root": "/Users/pdigumarthi/contextrover",
+    "counters": {
+      "ADJ": 2,
+      "BHV": 4,
+      "CTX": 3,
+      "DVG": 1,
+      "IFC_ASYNC": 1,
+      "IFC_SYNC": 3,
+      "SLC": 3,
+      "WS": 5
+    },
+    "discovery_run": 3,
+    "stages": {
+      "0": {
+        "artifacts": [
+          "intake.json"
+        ],
+        "completed_at": "2026-08-01T09:30:00Z",
+        "gate_result": {
+          "exit_code": 0,
+          "passed": true,
+          "script": "validate-artifacts.py"
+        },
+        "operator": "Jane Doe",
+        "started_at": "2026-08-01T09:00:00Z",
+        "status": "complete"
+      },
+      "1": {
+        "artifacts": [
+          "inventory/behaviors.json",
+          "inventory/interfaces.json",
+          "inventory/divergences.json",
+          "inventory/coupling.json",
+          "inventory/sequences.json",
+          "inventory/redaction-policy.json"
+        ],
+        "completed_at": "2026-08-01T11:00:00Z",
+        "gate_result": {
+          "exit_code": 0,
+          "passed": true,
+          "script": "trace-lint.py"
+        },
+        "operator": "Jane Doe",
+        "started_at": "2026-08-01T10:00:00Z",
+        "status": "complete"
+      },
+      "2": {
+        "artifacts": [
+          "model/contexts.json",
+          "model/context-map.json"
+        ],
+        "completed_at": "2026-08-01T12:30:00Z",
+        "gate_result": {
+          "exit_code": 0,
+          "passed": true,
+          "script": "trace-lint.py"
+        },
+        "operator": "Jane Doe",
+        "started_at": "2026-08-01T11:30:00Z",
+        "status": "complete"
+      },
+      "3": {
+        "artifacts": [
+          "workstreams.json",
+          "slices/SLC-0001/slice.json",
+          "slices/SLC-0002/slice.json",
+          "slices/SLC-0003/slice.json"
+        ],
+        "completed_at": "2026-08-01T14:00:00Z",
+        "gate_result": {
+          "exit_code": 0,
+          "passed": true,
+          "script": "trace-lint.py"
+        },
+        "operator": "Jane Doe",
+        "started_at": "2026-08-01T13:00:00Z",
+        "status": "complete"
+      }
+    },
+    "target": {
+      "languages": [
+        "python",
+        "go",
+        "java"
+      ],
+      "services": [
+        "orders-svc",
+        "billing-svc",
+        "shipping-svc"
+      ]
+    },
+    "version": "1"
+  },
+  "intake": {
+    "version": "1",
+    "completed_at": "2026-08-01T09:00:00Z",
+    "operator": "Jane Doe",
+    "estate": {
+      "repos": [
+        "fixtures/sample-estate/services"
+      ],
+      "service_count": 3,
+      "source_languages": [
+        "python",
+        "go",
+        "java"
+      ],
+      "target_language": "python",
+      "has_orchestrator": false,
+      "protocols": [
+        "http",
+        "kafka"
+      ]
+    },
+    "evidence": {
+      "commit_history": {
+        "available": true,
+        "note": "fixture repo history"
+      },
+      "access_logs": {
+        "available": false
+      },
+      "schema_registry": {
+        "available": false
+      },
+      "consumer_telemetry": {
+        "available": false
+      },
+      "traffic_capture": {
+        "available": false
+      },
+      "existing_tests": {
+        "available": false
+      }
+    },
+    "default_oracle_strategy": "characterization",
+    "constraints": {
+      "approval_gated": true,
+      "available_models": [
+        "sonnet",
+        "opus"
+      ],
+      "ensemble_k": 3,
+      "air_gapped": true,
+      "timeline": null,
+      "freeze_windows": []
+    },
+    "adapters": {
+      "issue_tracker": {
+        "intent": "no",
+        "system": null,
+        "status": "disabled",
+        "mcp_tools": [],
+        "config": {},
+        "reason": "not configured for this fixture run \u2014 T19 criterion 5"
+      },
+      "wiki": {
+        "intent": "no",
+        "system": null,
+        "status": "disabled",
+        "mcp_tools": [],
+        "config": {},
+        "reason": "not configured for this fixture run \u2014 T19 criterion 5"
+      },
+      "vcs": {
+        "intent": "no",
+        "system": null,
+        "status": "disabled",
+        "mcp_tools": [],
+        "config": {},
+        "reason": "not configured for this fixture run \u2014 T19 criterion 5"
+      }
+    },
+    "capacity": {
+      "engineers": 4,
+      "reviewers": 2,
+      "pr_size_limit": 500,
+      "prs_per_reviewer_per_day": 3,
+      "ci_cycle_minutes": 10,
+      "flake_rate": 0.01,
+      "deploys_per_week": 5,
+      "change_lead_time_days": 0,
+      "env_contention": "low",
+      "walking_skeleton_days": 10,
+      "freeze_windows": [],
+      "onboarding_ramp_days": 0
+    },
+    "governance": {
+      "success_metric_agreed": true,
+      "mandated_count": null,
+      "mandate_owner": null,
+      "boundary_approver": "Jane Doe",
+      "sunset_authority": "Jane Doe",
+      "gate_approvers": {
+        "0": "Jane Doe",
+        "2": "Jane Doe",
+        "4": "Jane Doe"
+      }
+    },
+    "teams": [
+      {
+        "name": "Ordering team",
+        "owns_services": [
+          "orders-svc"
+        ],
+        "lead": "Jane Doe"
+      },
+      {
+        "name": "Billing team",
+        "owns_services": [
+          "billing-svc"
+        ],
+        "lead": "John Smith"
+      },
+      {
+        "name": "Shipping team",
+        "owns_services": [
+          "shipping-svc"
+        ],
+        "lead": "Alex Kim"
+      }
+    ],
+    "delivery_mechanism": {
+      "model": "continuous",
+      "description": "Continuous deployment on merge to main, no formal release train. Change lead time 0 days (matches capacity.change_lead_time_days) \u2014 no manual approval gate between merge and production for this fixture estate."
+    },
+    "derived": {
+      "agents_enabled": [
+        "sync-surface-extractor",
+        "async-surface-extractor",
+        "behavior-extractor",
+        "dependency-mapper",
+        "consumer-mapper",
+        "call-sequence-analyst",
+        "change-coupling-analyst",
+        "divergence-detector",
+        "redaction-policy-assessor"
+      ],
+      "agents_disabled": [],
+      "packs_loaded": [
+        "python",
+        "go",
+        "java"
+      ],
+      "risks": [
+        {
+          "id": "R1",
+          "severity": "high",
+          "statement": "Unknown event consumers cannot be enumerated for order.created beyond what code evidence shows; any legacy topic may have readers not visible here.",
+          "blocks_gate": "consumer-migration-workstream"
+        }
+      ]
+    }
+  },
+  "single_repo": "fixtures/sample-estate/services",
+  "languages": [
+    "python",
+    "go",
+    "java"
+  ],
+  "behaviors": [
+    {
+      "confidence": "high",
+      "context": "CTX-0001",
+      "evidence": [
+        {
+          "locator": "services/orders-svc/app.py:20",
+          "source": "code"
+        }
+      ],
+      "id": "BHV-0001",
+      "interfaces": [
+        "IFC-ASYNC-0001"
+      ],
+      "kind": "emission",
+      "last_seen_run": 3,
+      "source_services": [
+        "orders-svc"
+      ],
+      "status": "confirmed",
+      "summary": "Publishes an order.created event after an order is placed",
+      "target_services": [
+        "orders-svc"
+      ]
+    },
+    {
+      "confidence": "high",
+      "context": "CTX-0002",
+      "evidence": [
+        {
+          "locator": "services/billing-svc/main.go:20",
+          "source": "code"
+        }
+      ],
+      "id": "BHV-0002",
+      "interfaces": [
+        "IFC-SYNC-0002",
+        "IFC-ASYNC-0001"
+      ],
+      "kind": "state-transition",
+      "last_seen_run": 3,
+      "source_services": [
+        "billing-svc"
+      ],
+      "status": "confirmed",
+      "summary": "Creates an invoice with status OPEN when a new order.created event is consumed"
+    },
+    {
+      "confidence": "medium",
+      "context": "CTX-0003",
+      "evidence": [
+        {
+          "locator": "services/shipping-svc/Shipping.java:10",
+          "source": "code"
+        }
+      ],
+      "id": "BHV-0003",
+      "interfaces": [
+        "IFC-SYNC-0001"
+      ],
+      "kind": "routing",
+      "last_seen_run": 3,
+      "source_services": [
+        "shipping-svc"
+      ],
+      "status": "confirmed",
+      "summary": "Returns shipment tracking status for a given shipment id"
+    },
+    {
+      "confidence": "high",
+      "context": "CTX-0001",
+      "evidence": [
+        {
+          "locator": "services/orders-svc/app.py:14",
+          "source": "code"
+        },
+        {
+          "locator": "tests/test_orders.py:8",
+          "source": "test"
+        }
+      ],
+      "failure_path": true,
+      "id": "BHV-0004",
+      "interfaces": [
+        "IFC-SYNC-0003"
+      ],
+      "kind": "validation",
+      "last_seen_run": 3,
+      "source_services": [
+        "orders-svc"
+      ],
+      "status": "confirmed",
+      "summary": "Rejects an order when requested quantity is zero or negative"
+    }
+  ],
+  "interfaces": [
+    {
+      "consumers": [],
+      "consumers_complete": false,
+      "evidence": [
+        {
+          "locator": "services/shipping-svc/Shipping.java:9",
+          "source": "code"
+        }
+      ],
+      "id": "IFC-SYNC-0001",
+      "kind": "sync",
+      "name": "GET /shipments/{id}",
+      "owning_service": "shipping-svc",
+      "protocol": "http",
+      "sync": {
+        "method": "GET",
+        "path": "/shipments/{id}",
+        "status_codes": [
+          200
+        ]
+      }
+    },
+    {
+      "consumers": [],
+      "consumers_complete": false,
+      "evidence": [
+        {
+          "locator": "services/billing-svc/main.go:16",
+          "source": "code"
+        },
+        {
+          "locator": "tests/test_invoices.go:8",
+          "source": "test"
+        }
+      ],
+      "id": "IFC-SYNC-0002",
+      "kind": "sync",
+      "name": "POST /invoices",
+      "owning_service": "billing-svc",
+      "protocol": "http",
+      "sync": {
+        "method": "POST",
+        "path": "/invoices",
+        "status_codes": [
+          200
+        ]
+      }
+    },
+    {
+      "consumers": [
+        {
+          "confidence": "medium",
+          "evidence_source": "code-reference",
+          "identifier": "web-app"
+        }
+      ],
+      "consumers_complete": false,
+      "evidence": [
+        {
+          "locator": "services/web-client/orders.js:3",
+          "source": "code"
+        },
+        {
+          "locator": "services/orders-svc/app.py:10",
+          "source": "code"
+        },
+        {
+          "locator": "tests/test_orders.py:5",
+          "source": "test"
+        }
+      ],
+      "id": "IFC-SYNC-0003",
+      "kind": "sync",
+      "name": "POST /orders",
+      "owning_service": "orders-svc",
+      "protocol": "http",
+      "sync": {
+        "method": "POST",
+        "path": "/orders"
+      }
+    },
+    {
+      "async": {
+        "delivery": "at-least-once",
+        "ordering_guarantee": "per-partition",
+        "partition_key": "id",
+        "topic": "order.created"
+      },
+      "consumers": [
+        {
+          "confidence": "high",
+          "evidence_source": "code-reference",
+          "identifier": "billing-svc"
+        }
+      ],
+      "consumers_complete": false,
+      "evidence": [
+        {
+          "locator": "services/orders-svc/app.py:20",
+          "source": "code"
+        }
+      ],
+      "id": "IFC-ASYNC-0001",
+      "kind": "async-published",
+      "name": "order.created",
+      "owning_service": "orders-svc",
+      "protocol": "kafka"
+    }
+  ],
+  "divergences_by_class": {
+    "false-cognate": [
+      {
+        "id": "DVG-0001",
+        "concept": "status",
+        "variants": [
+          {
+            "service": "orders-svc",
+            "behavior_id": "BHV-0001",
+            "description": "order.status: PENDING/CONFIRMED/CANCELLED \u2014 order lifecycle"
+          },
+          {
+            "service": "billing-svc",
+            "behavior_id": "BHV-0002",
+            "description": "invoice.status: OPEN/CLOSED \u2014 invoice lifecycle"
+          }
+        ],
+        "classification": "false-cognate",
+        "decision_owner": "Jane Doe",
+        "decided_at": "2026-08-01T12:00:00Z",
+        "rationale": "Order status and invoice status are different concepts that happen to share the English word 'status'. They belong to different bounded contexts (Ordering vs Billing) and should not be reconciled into one shared status model.",
+        "evidence": [
+          {
+            "source": "code",
+            "locator": "services/orders-svc/app.py:8"
+          },
+          {
+            "source": "code",
+            "locator": "services/billing-svc/main.go:10"
+          },
+          {
+            "source": "test",
+            "locator": "tests/test_orders.py:1"
+          }
+        ]
+      }
+    ]
+  },
+  "retirement": [
+    {
+      "interface_id": "IFC-SYNC-0002",
+      "known_consumers": [
+        "billing-svc internal callers"
+      ],
+      "status": "active",
+      "sunset_date": "2026-09-30",
+      "sunset_authority": "Jane Doe",
+      "last_traffic": "2026-08-01T00:00:00Z",
+      "zero_traffic_days": 0,
+      "migration_guide": null
+    },
+    {
+      "interface_id": "IFC-SYNC-0001",
+      "known_consumers": [],
+      "status": "active",
+      "sunset_date": "2026-10-31",
+      "sunset_authority": "Jane Doe",
+      "last_traffic": "2026-08-01T00:00:00Z",
+      "zero_traffic_days": 0,
+      "migration_guide": null
+    }
+  ],
+  "retired_or_zero": 0,
+  "permanent_count": 0,
+  "coverage": {
+    "total": 0,
+    "passing": 0
+  },
+  "happy_path": {
+    "total": 0,
+    "covered": 0
+  },
+  "failure_path": {
+    "total": 0,
+    "covered": 0
+  },
+  "agreement_dist": {
+    "all": 3,
+    "some": 4,
+    "one": 17
+  },
+  "high_risks": [
+    {
+      "id": "R1",
+      "severity": "high",
+      "statement": "Unknown event consumers cannot be enumerated for order.created beyond what code evidence shows; any legacy topic may have readers not visible here.",
+      "blocks_gate": "consumer-migration-workstream"
+    }
+  ],
+  "context_count": 3,
+  "stage2_done": true,
+  "waypoints": [
+    {
+      "id": "WP-0001",
+      "name": "Billing team off legacy POST /invoices",
+      "target_date": "2026-09-30",
+      "teams": [
+        "Billing team"
+      ],
+      "interfaces": [
+        "IFC-SYNC-0002"
+      ],
+      "status": "pending",
+      "rationale": "Gates CTX-0002's Stage 8 decommission step; matches retirement.json's sunset_date for IFC-SYNC-0002.",
+      "evidence": [
+        {
+          "source": "config",
+          "locator": "retirement.json#IFC-SYNC-0002"
+        }
+      ]
+    },
+    {
+      "id": "WP-0002",
+      "name": "Shipping team off legacy GET /shipments/{id}",
+      "target_date": "2026-08-15",
+      "teams": [
+        "Shipping team"
+      ],
+      "interfaces": [
+        "IFC-SYNC-0001"
+      ],
+      "status": "at-risk",
+      "rationale": "Target date is close and IFC-SYNC-0001 is still active with zero_traffic_days at 0 \u2014 no evidence of migration progress yet. Gates CTX-0003's Stage 8 decommission step.",
+      "evidence": [
+        {
+          "source": "config",
+          "locator": "retirement.json#IFC-SYNC-0001"
+        }
+      ]
+    }
+  ]
+}</script>
+<script>
+document.querySelectorAll("input.filter").forEach(function (input) {
+  var table = document.getElementById(input.dataset.table);
+  if (!table) return;
+  input.addEventListener("input", function () {
+    var q = input.value.toLowerCase();
+    table.querySelectorAll("tbody tr").forEach(function (row) {
+      row.style.display = row.textContent.toLowerCase().indexOf(q) === -1 ? "none" : "";
+    });
+  });
+});
+document.querySelectorAll("table thead th[data-sort]").forEach(function (th, idx) {
+  th.addEventListener("click", function () {
+    var table = th.closest("table");
+    var tbody = table.querySelector("tbody");
+    var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
+    var kind = th.dataset.sort;
+    var asc = th.dataset.asc !== "true";
+    th.dataset.asc = asc;
+    rows.sort(function (a, b) {
+      var av = a.children[idx].textContent.trim();
+      var bv = b.children[idx].textContent.trim();
+      if (kind === "num") { av = parseFloat(av) || 0; bv = parseFloat(bv) || 0; return asc ? av - bv : bv - av; }
+      return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+    rows.forEach(function (r) { tbody.appendChild(r); });
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "projection.schema.json",
+  "title": "Projection Record",
+  "type": "object",
+  "required": ["artifact_type", "artifact_id", "adapter", "contextrover_id", "status"],
+  "properties": {
+    "artifact_type": { "enum": ["stage-task", "divergence", "prd", "adr", "design-doc",
+                                  "retirement-entry", "observability-spec", "gate-result"],
+                        "description": "REQ-46 projection mapping." },
+    "artifact_id": { "type": "string" },
+    "adapter": { "enum": ["issue-tracker", "wiki", "vcs", "observability", "chat"] },
+    "contextrover_id": { "type": "string", "description": "REQ-42 — the key written onto the external object." },
+    "external_id": { "type": ["string", "null"] },
+    "external_url": { "type": ["string", "null"] },
+    "status": { "enum": ["pending", "projected", "failed"] },
+    "last_attempted_at": { "type": ["string", "null"], "format": "date-time" },
+    "reason": { "type": ["string", "null"], "description": "Required in practice when status is 'pending' or 'failed' — e.g. adapter unavailable (REQ-43)." }
+  }
+}

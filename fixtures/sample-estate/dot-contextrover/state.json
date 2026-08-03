@@ -1,0 +1,110 @@
+{
+  "plugin_root": "/Users/pdigumarthi/contextrover",
+  "counters": {
+    "ADJ": 2,
+    "BHV": 4,
+    "CTX": 3,
+    "DVG": 1,
+    "IFC_ASYNC": 1,
+    "IFC_SYNC": 3,
+    "SLC": 3,
+    "WS": 5,
+    "WP": 2
+  },
+  "discovery_run": 3,
+  "stages": {
+    "0": {
+      "artifacts": [
+        "intake.json"
+      ],
+      "completed_at": "2026-08-01T09:30:00Z",
+      "gate_result": {
+        "exit_code": 0,
+        "passed": true,
+        "script": "validate-artifacts.py"
+      },
+      "operator": "Jane Doe",
+      "started_at": "2026-08-01T09:00:00Z",
+      "status": "complete"
+    },
+    "1": {
+      "artifacts": [
+        "inventory/behaviors.json",
+        "inventory/interfaces.json",
+        "inventory/divergences.json",
+        "inventory/coupling.json",
+        "inventory/sequences.json",
+        "inventory/redaction-policy.json"
+      ],
+      "completed_at": "2026-08-01T11:00:00Z",
+      "gate_result": {
+        "exit_code": 0,
+        "passed": true,
+        "script": "trace-lint.py"
+      },
+      "operator": "Jane Doe",
+      "started_at": "2026-08-01T10:00:00Z",
+      "status": "complete"
+    },
+    "2": {
+      "artifacts": [
+        "model/contexts.json",
+        "model/context-map.json"
+      ],
+      "completed_at": "2026-08-01T12:30:00Z",
+      "gate_result": {
+        "exit_code": 0,
+        "passed": true,
+        "script": "trace-lint.py"
+      },
+      "operator": "Jane Doe",
+      "started_at": "2026-08-01T11:30:00Z",
+      "status": "complete"
+    },
+    "3": {
+      "artifacts": [
+        "workstreams.json",
+        "slices/SLC-0001/slice.json",
+        "slices/SLC-0002/slice.json",
+        "slices/SLC-0003/slice.json"
+      ],
+      "completed_at": "2026-08-01T14:00:00Z",
+      "gate_result": {
+        "exit_code": 0,
+        "passed": true,
+        "script": "trace-lint.py"
+      },
+      "operator": "Jane Doe",
+      "started_at": "2026-08-01T13:00:00Z",
+      "status": "complete"
+    },
+    "4": {
+      "artifacts": [
+        "roadmap.json",
+        "approvals.json"
+      ],
+      "completed_at": "2026-08-01T15:00:00Z",
+      "gate_result": {
+        "exit_code": 0,
+        "passed": true,
+        "script": "trace-lint.py"
+      },
+      "operator": "Jane Doe",
+      "started_at": "2026-08-01T14:30:00Z",
+      "status": "complete"
+    }
+  },
+  "target": {
+    "languages": [
+      "python",
+      "go",
+      "java"
+    ],
+    "services": [
+      "orders-svc",
+      "billing-svc",
+      "shipping-svc"
+    ]
+  },
+  "version": "1"
+}

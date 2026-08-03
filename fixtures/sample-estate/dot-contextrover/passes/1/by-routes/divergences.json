@@ -1,0 +1,7 @@
+[
+  { "concept": "status", "variants": [
+      {"service":"orders-svc","description":"order.status: PENDING/CONFIRMED/CANCELLED — order lifecycle"},
+      {"service":"billing-svc","description":"invoice.status: OPEN/CLOSED — invoice lifecycle"}
+    ],
+    "evidence": [{"source":"code","locator":"services/orders-svc/app.py:8"},{"source":"code","locator":"services/billing-svc/main.go:10"}] }
+]

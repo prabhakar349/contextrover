@@ -1,0 +1,7 @@
+{
+  "//": "Authoring permission profile. Used by the main session for stages that write or execute: Stage 0 intake, Stage 2 adjudication-record writing, and any stage command that runs a gate script or git commit under .contextrover/. Ask-gated — normal approval prompts apply; this profile does not bypass them (Constitution C3: any agent needing write or execute access must be invoked from the main session, not spawned as a subagent).",
+  "permissions": {
+    "allow": ["Read", "Grep", "Glob", "Write", "Edit", "Bash"],
+    "defaultMode": "default"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "coupling.schema.json",
+  "title": "Change-Coupling Record",
+  "type": "object",
+  "required": ["entity_a", "entity_b", "co_change_count", "evidence"],
+  "properties": {
+    "entity_a": { "type": "string", "description": "File path or service name" },
+    "entity_b": { "type": "string" },
+    "co_change_count": { "type": "integer", "minimum": 1 },
+    "total_commits_a": { "type": "integer", "minimum": 0 },
+    "total_commits_b": { "type": "integer", "minimum": 0 },
+    "coupling_score": { "type": "number", "minimum": 0, "maximum": 1 },
+    "evidence": { "$ref": "behavior.schema.json#/$defs/evidence" }
+  }
+}

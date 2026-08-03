@@ -1,0 +1,47 @@
+{
+  "capacity": {
+    "assumptions_used": [
+      "behaviors_per_pr defaulted to the 11-estimation.md seed value of 4 (not yet calibrated \u2014 no Increment 0 completed)",
+      "f_failure defaulted to the seed value of 1.5",
+      "f_async defaulted to the seed value of 2.0"
+    ],
+    "binding_constraint": "integration",
+    "integration_rate": 1.0,
+    "review_rate": 6
+  },
+  "forecast": {
+    "agreement_rate": 0.0476,
+    "band": "\u00b180%",
+    "duration_days": 14,
+    "recommendation": "Stage 1 agreement rate is 0.0476, well below the 0.75 threshold in 11-estimation.md \u00a75. This estate is tiny (3 trivial services) so near-zero agreement is expected \u2014 almost every finding was found by only one or two of three framings, simply because there wasn't much for multiple framings to independently rediscover. On a real estate this same reading would mean scope is not understood and would recommend extending Discovery before committing to this date; recorded here for completeness rather than suppressed, per 11-estimation.md \u00a76's instruction to never omit the forecast.",
+    "restale_after": "completion of Increment 0"
+  },
+  "increments": [
+    {
+      "is_walking_skeleton": true,
+      "name": "Walking Skeleton",
+      "ordinal": 0,
+      "owner": "Platform team",
+      "slices": []
+    },
+    {
+      "name": "Ordering core",
+      "ordinal": 1,
+      "owner": "Ordering team",
+      "slices": [
+        "SLC-0001"
+      ]
+    },
+    {
+      "name": "Billing and Shipping",
+      "ordinal": 2,
+      "owner": "Billing team",
+      "slices": [
+        "SLC-0002",
+        "SLC-0003"
+      ]
+    }
+  ],
+  "priority_conflicts": [],
+  "version_hash": "sha256:839e51b329c397c07a15862204a8a9f4661dd8b2a9db6a2a76a280f853ba7313"
+}

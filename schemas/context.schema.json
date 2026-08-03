@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "context.schema.json",
+  "title": "Modeled Context",
+  "type": "object",
+  "required": ["id", "name", "aggregate_roots", "state", "evidence"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^CTX-[0-9]{4}$" },
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "subdomain_type": { "enum": ["core", "supporting", "generic", "unknown"],
+                         "description": "ddd-reference.md §1.1 classification." },
+    "aggregate_roots": {
+      "type": "array", "minItems": 1,
+      "items": { "type": "string" },
+      "description": "At least one candidate aggregate root, named at Strategic Design (07-stages.md Stage 2 gate). Full invariants follow in Tactical Design (Stage 5)."
+    },
+    "ubiquitous_language": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["term", "definition"],
+        "properties": { "term": { "type": "string" }, "definition": { "type": "string" } }
+      }
+    },
+    "state": { "enum": ["Proposed", "Approved", "Building", "Ready", "Shadowing", "Canary", "Cutover", "Decommissioned"],
+               "description": "07-stages.md §5 Context state model." },
+    "owning_team": { "type": ["string", "null"],
+                      "description": "Extension beyond the base spec pack: the team that owns this Context end to end, named at Stage 2 adjudication from intake.json's teams[] roster. Team Topology is ddd-reference.md §4 rule 5 -- a tiebreaker heuristic, never a primary boundary criterion -- but once a boundary is decided on other grounds, recording who owns it is what makes the boundary actionable and is what Waypoint records reference." },
+    "evidence": { "$ref": "behavior.schema.json#/$defs/evidence" }
+  }
+}

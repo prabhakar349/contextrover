@@ -1,0 +1,1 @@
+[ { "id": "AC-0003", "slice": "SLC-0002", "statement": "Consuming an order.created event creates an invoice with status OPEN", "behaviors": ["BHV-0002"] } ]

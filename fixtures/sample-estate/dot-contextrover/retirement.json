@@ -1,0 +1,22 @@
+[
+  {
+    "interface_id": "IFC-SYNC-0002",
+    "known_consumers": ["billing-svc internal callers"],
+    "status": "active",
+    "sunset_date": "2026-09-30",
+    "sunset_authority": "Jane Doe",
+    "last_traffic": "2026-08-01T00:00:00Z",
+    "zero_traffic_days": 0,
+    "migration_guide": null
+  },
+  {
+    "interface_id": "IFC-SYNC-0001",
+    "known_consumers": [],
+    "status": "active",
+    "sunset_date": "2026-10-31",
+    "sunset_authority": "Jane Doe",
+    "last_traffic": "2026-08-01T00:00:00Z",
+    "zero_traffic_days": 0,
+    "migration_guide": null
+  }
+]

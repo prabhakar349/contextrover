@@ -1,0 +1,8 @@
+[
+  { "summary": "Rejects an order that has a negative or zero quantity", "source_services": ["orders-svc"],
+    "interfaces": ["POST /orders"], "kind": "validation", "failure_path": true,
+    "evidence": [{"source":"test","locator":"tests/test_orders.py:8"}], "confidence": "high" },
+  { "summary": "Creates a new invoice with status OPEN after consuming order.created", "source_services": ["billing-svc"],
+    "interfaces": ["POST /invoices", "order.created"], "kind": "state-transition",
+    "evidence": [{"source":"test","locator":"tests/test_invoices.go:15"}], "confidence": "high" }
+]

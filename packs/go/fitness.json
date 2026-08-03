@@ -1,0 +1,15 @@
+{
+  "language": "go",
+  "rules": [
+    {
+      "id": "no-domain-depends-on-adapter",
+      "description": "Domain packages must not import adapter packages (go-arch-lint dependency check)",
+      "command": "go-arch-lint check --project-path . --arch-file .go-arch-lint.yml"
+    },
+    {
+      "id": "no-adapter-types-in-domain",
+      "description": "Domain packages must declare no adapter-layer types",
+      "command": "go-arch-lint check --project-path . --arch-file .go-arch-lint.yml --strict"
+    }
+  ]
+}

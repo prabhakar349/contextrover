@@ -1,0 +1,6 @@
+{
+  "name": "contextrover",
+  "description": "Domain-Driven Modernization: re-decompose N services into M bounded-context-aligned services with no unadjudicated behavioral change.",
+  "version": "0.1.0",
+  "author": { "name": "" }
+}

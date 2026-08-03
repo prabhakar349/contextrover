@@ -1,0 +1,11 @@
+[
+  { "id": "CTX-0001", "name": "Ordering", "subdomain_type": "core", "aggregate_roots": ["Order"], "state": "Approved",
+    "owning_team": "Ordering team",
+    "evidence": [ { "source": "code", "locator": "services/orders-svc/app.py:1" } ] },
+  { "id": "CTX-0002", "name": "Billing", "subdomain_type": "core", "aggregate_roots": ["Invoice"], "state": "Approved",
+    "owning_team": "Billing team",
+    "evidence": [ { "source": "code", "locator": "services/billing-svc/main.go:1" } ] },
+  { "id": "CTX-0003", "name": "Shipping", "subdomain_type": "supporting", "aggregate_roots": ["Shipment"], "state": "Approved",
+    "owning_team": "Shipping team",
+    "evidence": [ { "source": "code", "locator": "services/shipping-svc/Shipping.java:1" } ] }
+]

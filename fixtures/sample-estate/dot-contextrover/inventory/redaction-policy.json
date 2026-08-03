@@ -1,0 +1,61 @@
+[
+  {
+    "evidence": [
+      {
+        "locator": "services/shipping-svc/Shipping.java:10",
+        "source": "code"
+      }
+    ],
+    "interface": "IFC-SYNC-0001",
+    "verdict": "GO",
+    "volatile_fields": []
+  },
+  {
+    "evidence": [
+      {
+        "locator": "services/billing-svc/main.go:18",
+        "source": "code"
+      }
+    ],
+    "interface": "IFC-SYNC-0002",
+    "verdict": "GO",
+    "volatile_fields": [
+      {
+        "field": "id",
+        "maskable": true
+      }
+    ]
+  },
+  {
+    "evidence": [
+      {
+        "locator": "services/orders-svc/app.py:16",
+        "source": "code"
+      }
+    ],
+    "interface": "IFC-SYNC-0003",
+    "verdict": "GO",
+    "volatile_fields": [
+      {
+        "field": "id",
+        "maskable": true
+      }
+    ]
+  },
+  {
+    "evidence": [
+      {
+        "locator": "services/orders-svc/app.py:20",
+        "source": "code"
+      }
+    ],
+    "interface": "IFC-ASYNC-0001",
+    "verdict": "GO",
+    "volatile_fields": [
+      {
+        "field": "id",
+        "maskable": true
+      }
+    ]
+  }
+]

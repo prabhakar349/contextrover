@@ -1,0 +1,1 @@
+[ { "id": "AC-0004", "slice": "SLC-0003", "statement": "GET /shipments/{id} returns the current tracking status for a known shipment id", "behaviors": ["BHV-0003"] } ]

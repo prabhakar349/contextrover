@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cutover-plan.schema.json",
+  "title": "Cutover Plan",
+  "type": "object",
+  "required": ["context", "transition_profile", "steps"],
+  "properties": {
+    "context": { "type": "string", "pattern": "^CTX-[0-9]{4}$" },
+    "transition_profile": {
+      "enum": ["shadow-canary-cutover-decommission"],
+      "description": "SEAM S1.5 — Stage 8 selects a profile rather than hard-coding steps. v1 ships the brownfield profile only; a specification-oracle profile (e.g. a 'launch' profile) is a reserved future value."
+    },
+    "steps": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "enum": ["shadow", "canary", "progressive-cutover", "decommission"] },
+          "status": { "enum": ["not-started", "in-progress", "complete", "failed"] },
+          "diff_rate_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+          "diff_rate_observed": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "slo_gates_held": { "type": ["boolean", "null"] },
+          "started_at": { "type": "string", "format": "date-time" },
+          "completed_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "interfaces_retired": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["interface_id"],
+        "properties": {
+          "interface_id": { "type": "string", "pattern": "^IFC-(SYNC|ASYNC)-[0-9]{4}$" },
+          "zero_traffic_days": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "decommission_checklist_ref": { "type": ["string", "null"] }
+  }
+}

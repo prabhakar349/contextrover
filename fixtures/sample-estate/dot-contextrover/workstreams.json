@@ -1,0 +1,7 @@
+[
+  { "id": "WS-0001", "kind": "walking-skeleton", "context": null, "owner": "Platform team", "state": "Open" },
+  { "id": "WS-0002", "kind": "context-scoped", "context": "CTX-0001", "owner": "Ordering team", "state": "Active" },
+  { "id": "WS-0003", "kind": "context-scoped", "context": "CTX-0002", "owner": "Billing team", "state": "Open" },
+  { "id": "WS-0004", "kind": "context-scoped", "context": "CTX-0003", "owner": "Shipping team", "state": "Open" },
+  { "id": "WS-0005", "kind": "consumer-migration", "context": null, "owner": "Jane Doe", "state": "Open" }
+]

@@ -1,0 +1,11 @@
+[
+  { "kind": "sync", "name": "POST /orders", "owning_service": "orders-svc", "protocol": "http",
+    "sync": {"method":"POST","path":"/orders","status_codes":[201,400]}, "consumers": [], "consumers_complete": false,
+    "evidence": [{"source":"code","locator":"services/orders-svc/app.py:10"}] },
+  { "kind": "sync", "name": "POST /invoices", "owning_service": "billing-svc", "protocol": "http",
+    "sync": {"method":"POST","path":"/invoices","status_codes":[200]}, "consumers": [], "consumers_complete": false,
+    "evidence": [{"source":"code","locator":"services/billing-svc/main.go:16"}] },
+  { "kind": "sync", "name": "GET /shipments/{id}", "owning_service": "shipping-svc", "protocol": "http",
+    "sync": {"method":"GET","path":"/shipments/{id}","status_codes":[200]}, "consumers": [], "consumers_complete": false,
+    "evidence": [{"source":"code","locator":"services/shipping-svc/Shipping.java:9"}] }
+]

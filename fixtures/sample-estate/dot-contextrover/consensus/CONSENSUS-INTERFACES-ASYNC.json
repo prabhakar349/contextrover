@@ -1,0 +1,24 @@
+{
+  "agreement_rate": 0.0,
+  "candidates": [
+    {
+      "candidate_id": "order.created",
+      "decision": "triage",
+      "found_by": [
+        "by-routes"
+      ],
+      "partition": "one"
+    }
+  ],
+  "decided_at": "2026-08-02T13:42:31Z",
+  "decided_by": "consensus.py (mechanical)",
+  "framings": [
+    "by-call-sites",
+    "by-routes",
+    "by-tests"
+  ],
+  "id": "ADJ-0000",
+  "k": 3,
+  "kind": "consensus-run",
+  "stage": 1
+}

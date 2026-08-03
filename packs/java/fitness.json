@@ -1,0 +1,20 @@
+{
+  "language": "java",
+  "rules": [
+    {
+      "id": "no-domain-depends-on-adapter",
+      "description": "Domain packages must not import adapter packages (ArchUnit layered-architecture check)",
+      "command": "mvn -q -Dtest=ArchitectureFitnessTest#domainDoesNotDependOnAdapters test"
+    },
+    {
+      "id": "no-adapter-types-in-domain",
+      "description": "Domain packages must declare no adapter-layer types",
+      "command": "mvn -q -Dtest=ArchitectureFitnessTest#domainDeclaresNoAdapterTypes test"
+    },
+    {
+      "id": "aggregates-package-private-state",
+      "description": "Aggregate internal state is not accessed from outside its own package",
+      "command": "mvn -q -Dtest=ArchitectureFitnessTest#aggregateStateIsEncapsulated test"
+    }
+  ]
+}

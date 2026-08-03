@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "roadmap.schema.json",
+  "title": "Delivery Roadmap",
+  "type": "object",
+  "required": ["version_hash", "increments", "capacity", "forecast"],
+  "properties": {
+    "version_hash": { "type": "string" },
+    "increments": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["ordinal", "slices", "owner"],
+        "properties": {
+          "ordinal": { "type": "integer", "minimum": 0 },
+          "name":    { "type": "string" },
+          "slices":  { "type": "array", "items": { "type": "string", "pattern": "^SLC-[0-9]{4}$" } },
+          "owner":   { "type": "string" },
+          "is_walking_skeleton": { "type": "boolean" }
+        }
+      }
+    },
+    "capacity": {
+      "type": "object",
+      "required": ["binding_constraint", "review_rate", "integration_rate"],
+      "properties": {
+        "binding_constraint": { "enum": ["review", "integration", "authoring"] },
+        "review_rate":        { "type": "number" },
+        "integration_rate":   { "type": "number" },
+        "assumptions_used":   { "type": "array", "items": { "type": "string" },
+                                "description": "Every default used because the answer was unknown" }
+      }
+    },
+    "forecast": {
+      "type": "object",
+      "required": ["band", "agreement_rate", "restale_after"],
+      "properties": {
+        "duration_days":  { "type": "number" },
+        "band":           { "enum": ["±20%", "±40%", "±80%"] },
+        "agreement_rate": { "type": "number" },
+        "restale_after":  { "type": "string", "description": "Always: completion of Increment 0" },
+        "recommendation": { "type": ["string","null"] }
+      }
+    },
+    "priority_conflicts": { "type": "array", "items": { "type": "string" },
+                            "description": "Where stated business order conflicts with dependency or blast radius. Flagged, never overridden." }
+  }
+}

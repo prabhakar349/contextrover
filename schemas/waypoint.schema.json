@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "waypoint.schema.json",
+  "title": "Migration Waypoint",
+  "description": "Extension beyond the base spec pack (not in 01-spec.md/07-stages.md). A dated checkpoint in the Consumer Migration Workstream, tying a set of legacy Interfaces' retirement to specific teams' consumer-migration readiness -- what the Retirement Register's per-interface status alone doesn't express: which team must have moved by when, and what that milestone actually blocks.",
+  "type": "object",
+  "required": ["id", "name", "target_date", "teams", "interfaces", "status"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^WP-[0-9]{4}$" },
+    "name": { "type": "string", "minLength": 1 },
+    "target_date": { "type": "string", "format": "date" },
+    "teams": {
+      "type": "array", "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Team names from intake.json.teams[] whose consumers must have migrated off the listed interfaces by target_date."
+    },
+    "interfaces": {
+      "type": "array", "minItems": 1,
+      "items": { "type": "string", "pattern": "^IFC-(SYNC|ASYNC)-[0-9]{4}$" },
+      "description": "Legacy Interfaces this waypoint gates. Cross-reference retirement.json for each one's actual status."
+    },
+    "status": { "enum": ["pending", "at-risk", "met", "missed"],
+                "description": "pending = target_date not yet reached and on track; at-risk = target_date approaching with interfaces still active; met = every listed interface reached zero-traffic or retired by target_date; missed = target_date passed with an interface still active. Never advance past 'pending' without supporting evidence, same discipline as retirement.json." },
+    "rationale": { "type": "string", "description": "Why this milestone exists and what it blocks downstream (e.g. a Context's Stage 8 decommission, a compliance deadline)." },
+    "evidence": { "$ref": "behavior.schema.json#/$defs/evidence" }
+  }
+}

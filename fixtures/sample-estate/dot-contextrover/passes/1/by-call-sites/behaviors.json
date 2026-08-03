@@ -1,0 +1,5 @@
+[
+  { "summary": "Returns shipment tracking status for a given shipment id", "source_services": ["shipping-svc"],
+    "interfaces": ["GET /shipments/{id}"], "kind": "routing",
+    "evidence": [{"source":"code","locator":"services/shipping-svc/Shipping.java:10"}], "confidence": "medium" }
+]

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "coverage.schema.json",
+  "title": "Coverage",
+  "type": "object",
+  "required": ["slice", "denominator", "total", "covered", "passing"],
+  "properties": {
+    "slice":       { "type": "string" },
+    "denominator": { "enum": ["behaviors", "acceptance_criteria"],
+                     "description": "SEAM S1.4 — never hard-code. v1 uses 'behaviors'." },
+    "total":       { "type": "integer" },
+    "covered":     { "type": "integer" },
+    "passing":     { "type": "integer" },
+    "happy_path":  { "type": "object", "properties": { "total": {"type":"integer"}, "covered": {"type":"integer"} } },
+    "failure_path":{ "type": "object", "properties": { "total": {"type":"integer"}, "covered": {"type":"integer"} },
+                     "description": "Reported separately. A suite complete on happy paths only is the characteristic silent failure." }
+  }
+}

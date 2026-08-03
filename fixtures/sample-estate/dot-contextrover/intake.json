@@ -1,0 +1,73 @@
+{
+  "version": "1",
+  "completed_at": "2026-08-01T09:00:00Z",
+  "operator": "Jane Doe",
+  "estate": {
+    "repos": ["fixtures/sample-estate/services"],
+    "service_count": 3,
+    "source_languages": ["python", "go", "java"],
+    "target_language": "python",
+    "has_orchestrator": false,
+    "protocols": ["http", "kafka"]
+  },
+  "evidence": {
+    "commit_history": { "available": true, "note": "fixture repo history" },
+    "access_logs": { "available": false },
+    "schema_registry": { "available": false },
+    "consumer_telemetry": { "available": false },
+    "traffic_capture": { "available": false },
+    "existing_tests": { "available": false }
+  },
+  "default_oracle_strategy": "characterization",
+  "constraints": {
+    "approval_gated": true,
+    "available_models": ["sonnet", "opus"],
+    "ensemble_k": 3,
+    "air_gapped": true,
+    "timeline": null,
+    "freeze_windows": []
+  },
+  "adapters": {
+    "issue_tracker": { "intent": "no", "system": null, "status": "disabled", "mcp_tools": [], "config": {}, "reason": "not configured for this fixture run — T19 criterion 5" },
+    "wiki": { "intent": "no", "system": null, "status": "disabled", "mcp_tools": [], "config": {}, "reason": "not configured for this fixture run — T19 criterion 5" },
+    "vcs": { "intent": "no", "system": null, "status": "disabled", "mcp_tools": [], "config": {}, "reason": "not configured for this fixture run — T19 criterion 5" }
+  },
+  "capacity": {
+    "engineers": 4, "reviewers": 2, "pr_size_limit": 500,
+    "prs_per_reviewer_per_day": 3, "ci_cycle_minutes": 10, "flake_rate": 0.01,
+    "deploys_per_week": 5, "change_lead_time_days": 0,
+    "env_contention": "low", "walking_skeleton_days": 10,
+    "freeze_windows": [], "onboarding_ramp_days": 0
+  },
+  "governance": {
+    "success_metric_agreed": true, "mandated_count": null,
+    "mandate_owner": null, "boundary_approver": "Jane Doe",
+    "sunset_authority": "Jane Doe", "gate_approvers": { "0": "Jane Doe", "2": "Jane Doe", "4": "Jane Doe" }
+  },
+  "teams": [
+    { "name": "Ordering team", "owns_services": ["orders-svc"], "lead": "Jane Doe" },
+    { "name": "Billing team", "owns_services": ["billing-svc"], "lead": "John Smith" },
+    { "name": "Shipping team", "owns_services": ["shipping-svc"], "lead": "Alex Kim" }
+  ],
+  "delivery_mechanism": {
+    "model": "continuous",
+    "description": "Continuous deployment on merge to main, no formal release train. Change lead time 0 days (matches capacity.change_lead_time_days) — no manual approval gate between merge and production for this fixture estate."
+  },
+  "derived": {
+    "agents_enabled": [
+      "sync-surface-extractor", "async-surface-extractor", "behavior-extractor",
+      "dependency-mapper", "consumer-mapper", "call-sequence-analyst",
+      "change-coupling-analyst", "divergence-detector", "redaction-policy-assessor"
+    ],
+    "agents_disabled": [],
+    "packs_loaded": ["python", "go", "java"],
+    "risks": [
+      {
+        "id": "R1",
+        "severity": "high",
+        "statement": "Unknown event consumers cannot be enumerated for order.created beyond what code evidence shows; any legacy topic may have readers not visible here.",
+        "blocks_gate": "consumer-migration-workstream"
+      }
+    ]
+  }
+}

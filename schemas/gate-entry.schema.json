@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gate-entry.schema.json",
+  "title": "Gate Audit Log Entry",
+  "type": "object",
+  "required": ["ts", "stage", "script", "exit_code", "operator", "artifact_hashes"],
+  "properties": {
+    "ts": { "type": "string", "format": "date-time" },
+    "stage": { "type": "integer", "minimum": 0, "maximum": 8 },
+    "script": { "type": "string" },
+    "exit_code": { "type": "integer" },
+    "operator": { "type": "string" },
+    "summary": { "type": "string" },
+    "artifact_hashes": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+      "description": "REQ-33 — makes it provable after the fact which version of the evidence a gate actually passed against."
+    }
+  },
+  "description": "One line of .contextrover/gates.jsonl (REQ-33). Append-only; never rewritten."
+}

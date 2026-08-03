@@ -1,0 +1,6 @@
+[
+  { "interface": "POST /orders", "volatile_fields": [{"field":"id","maskable":true}], "verdict": "GO", "evidence": [{"source":"code","locator":"services/orders-svc/app.py:16"}] },
+  { "interface": "order.created", "volatile_fields": [{"field":"id","maskable":true}], "verdict": "GO", "evidence": [{"source":"code","locator":"services/orders-svc/app.py:20"}] },
+  { "interface": "POST /invoices", "volatile_fields": [{"field":"id","maskable":true}], "verdict": "GO", "evidence": [{"source":"code","locator":"services/billing-svc/main.go:18"}] },
+  { "interface": "GET /shipments/{id}", "volatile_fields": [], "verdict": "GO", "evidence": [{"source":"code","locator":"services/shipping-svc/Shipping.java:10"}] }
+]

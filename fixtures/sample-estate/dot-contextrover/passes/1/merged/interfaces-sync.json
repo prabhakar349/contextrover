@@ -1,0 +1,83 @@
+[
+  {
+    "consumers": [],
+    "consumers_complete": false,
+    "evidence": [
+      {
+        "locator": "services/shipping-svc/Shipping.java:9",
+        "source": "code"
+      }
+    ],
+    "id": "IFC-SYNC-0001",
+    "kind": "sync",
+    "name": "GET /shipments/{id}",
+    "owning_service": "shipping-svc",
+    "protocol": "http",
+    "sync": {
+      "method": "GET",
+      "path": "/shipments/{id}",
+      "status_codes": [
+        200
+      ]
+    }
+  },
+  {
+    "consumers": [],
+    "consumers_complete": false,
+    "evidence": [
+      {
+        "locator": "services/billing-svc/main.go:16",
+        "source": "code"
+      },
+      {
+        "locator": "tests/test_invoices.go:8",
+        "source": "test"
+      }
+    ],
+    "id": "IFC-SYNC-0002",
+    "kind": "sync",
+    "name": "POST /invoices",
+    "owning_service": "billing-svc",
+    "protocol": "http",
+    "sync": {
+      "method": "POST",
+      "path": "/invoices",
+      "status_codes": [
+        200
+      ]
+    }
+  },
+  {
+    "consumers": [
+      {
+        "confidence": "medium",
+        "evidence_source": "code-reference",
+        "identifier": "web-app"
+      }
+    ],
+    "consumers_complete": false,
+    "evidence": [
+      {
+        "locator": "services/web-client/orders.js:3",
+        "source": "code"
+      },
+      {
+        "locator": "services/orders-svc/app.py:10",
+        "source": "code"
+      },
+      {
+        "locator": "tests/test_orders.py:5",
+        "source": "test"
+      }
+    ],
+    "id": "IFC-SYNC-0003",
+    "kind": "sync",
+    "name": "POST /orders",
+    "owning_service": "orders-svc",
+    "protocol": "http",
+    "sync": {
+      "method": "POST",
+      "path": "/orders"
+    }
+  }
+]

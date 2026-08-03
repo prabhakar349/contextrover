@@ -1,0 +1,17 @@
+{"confidence": "high", "id": "BHV-0001", "label": "Publishes an order.created event after an order is placed", "stage_added": 1, "target_services": ["orders-svc"], "type": "Behavior"}
+{"confidence": "high", "id": "BHV-0002", "label": "Creates an invoice with status OPEN when a new order.created event is consumed", "stage_added": 1, "type": "Behavior"}
+{"confidence": "medium", "id": "BHV-0003", "label": "Returns shipment tracking status for a given shipment id", "stage_added": 1, "type": "Behavior"}
+{"confidence": "high", "id": "BHV-0004", "label": "Rejects an order when requested quantity is zero or negative", "stage_added": 1, "type": "Behavior"}
+{"id": "web-app", "label": "web-app", "type": "Consumer"}
+{"id": "CTX-0001", "label": "Ordering", "stage_added": 2, "type": "Context"}
+{"id": "CTX-0002", "label": "Billing", "stage_added": 2, "type": "Context"}
+{"id": "CTX-0003", "label": "Shipping", "stage_added": 2, "type": "Context"}
+{"id": "DVG-0001", "label": "status", "stage_added": 1, "type": "Divergence"}
+{"id": "IFC-ASYNC-0001", "label": "order.created", "protocol": "kafka", "type": "Interface"}
+{"id": "IFC-SYNC-0001", "label": "GET /shipments/{id}", "protocol": "http", "type": "Interface"}
+{"id": "IFC-SYNC-0002", "label": "POST /invoices", "protocol": "http", "type": "Interface"}
+{"id": "IFC-SYNC-0003", "label": "POST /orders", "protocol": "http", "type": "Interface"}
+{"id": "billing-svc", "label": "billing-svc", "type": "Service"}
+{"id": "orders-svc", "label": "orders-svc", "type": "Service"}
+{"id": "shipping-svc", "label": "shipping-svc", "type": "Service"}
+{"id": "order.created", "label": "order.created", "type": "Topic"}

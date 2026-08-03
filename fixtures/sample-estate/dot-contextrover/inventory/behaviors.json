@@ -1,0 +1,95 @@
+[
+  {
+    "confidence": "high",
+    "context": "CTX-0001",
+    "evidence": [
+      {
+        "locator": "services/orders-svc/app.py:20",
+        "source": "code"
+      }
+    ],
+    "id": "BHV-0001",
+    "interfaces": [
+      "IFC-ASYNC-0001"
+    ],
+    "kind": "emission",
+    "last_seen_run": 3,
+    "source_services": [
+      "orders-svc"
+    ],
+    "status": "confirmed",
+    "summary": "Publishes an order.created event after an order is placed",
+    "target_services": [
+      "orders-svc"
+    ]
+  },
+  {
+    "confidence": "high",
+    "context": "CTX-0002",
+    "evidence": [
+      {
+        "locator": "services/billing-svc/main.go:20",
+        "source": "code"
+      }
+    ],
+    "id": "BHV-0002",
+    "interfaces": [
+      "IFC-SYNC-0002",
+      "IFC-ASYNC-0001"
+    ],
+    "kind": "state-transition",
+    "last_seen_run": 3,
+    "source_services": [
+      "billing-svc"
+    ],
+    "status": "confirmed",
+    "summary": "Creates an invoice with status OPEN when a new order.created event is consumed"
+  },
+  {
+    "confidence": "medium",
+    "context": "CTX-0003",
+    "evidence": [
+      {
+        "locator": "services/shipping-svc/Shipping.java:10",
+        "source": "code"
+      }
+    ],
+    "id": "BHV-0003",
+    "interfaces": [
+      "IFC-SYNC-0001"
+    ],
+    "kind": "routing",
+    "last_seen_run": 3,
+    "source_services": [
+      "shipping-svc"
+    ],
+    "status": "confirmed",
+    "summary": "Returns shipment tracking status for a given shipment id"
+  },
+  {
+    "confidence": "high",
+    "context": "CTX-0001",
+    "evidence": [
+      {
+        "locator": "services/orders-svc/app.py:14",
+        "source": "code"
+      },
+      {
+        "locator": "tests/test_orders.py:8",
+        "source": "test"
+      }
+    ],
+    "failure_path": true,
+    "id": "BHV-0004",
+    "interfaces": [
+      "IFC-SYNC-0003"
+    ],
+    "kind": "validation",
+    "last_seen_run": 3,
+    "source_services": [
+      "orders-svc"
+    ],
+    "status": "confirmed",
+    "summary": "Rejects an order when requested quantity is zero or negative"
+  }
+]

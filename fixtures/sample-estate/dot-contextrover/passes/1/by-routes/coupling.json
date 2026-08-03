@@ -1,0 +1,2 @@
+[ { "entity_a": "orders-svc", "entity_b": "billing-svc", "co_change_count": 4,
+    "evidence": [{"source":"commit-history","locator":"fixture commit log"}] } ]

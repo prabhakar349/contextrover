@@ -1,0 +1,7 @@
+[
+  { "concept": "status", "variants": [
+      {"service":"orders-svc","description":"order.status: PENDING/CONFIRMED/CANCELLED"},
+      {"service":"billing-svc","description":"invoice.status: OPEN/CLOSED"}
+    ],
+    "evidence": [{"source":"test","locator":"tests/test_orders.py:1"}] }
+]

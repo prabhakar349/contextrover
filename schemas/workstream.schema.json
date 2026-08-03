@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workstream.schema.json",
+  "title": "Workstream",
+  "type": "object",
+  "required": ["id", "kind", "state"],
+  "properties": {
+    "id":      { "type": "string", "pattern": "^WS-[0-9]{4}$" },
+    "kind":    { "enum": ["context-scoped", "walking-skeleton", "consumer-migration"] },
+    "context": { "type": ["string","null"], "pattern": "^CTX-[0-9]{4}$",
+                 "description": "Null for cross-cutting workstreams — they belong to the Engagement" },
+    "owner":   { "type": "string" },
+    "state":   { "enum": ["Open","Active","Complete"] }
+  }
+}

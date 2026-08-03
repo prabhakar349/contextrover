@@ -1,0 +1,12 @@
+{
+  "id": "SLC-0001",
+  "name": "Order placement",
+  "workstream": "WS-0002",
+  "context": "CTX-0001",
+  "oracle_strategy": "characterization",
+  "behaviors": ["BHV-0001", "BHV-0004"],
+  "use_cases": ["Place an order"],
+  "state": "Outlined",
+  "harness_lock": null,
+  "approvals": []
+}

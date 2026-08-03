@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "redaction-policy.schema.json",
+  "title": "Redaction Policy Assessment",
+  "type": "object",
+  "required": ["interface", "volatile_fields", "verdict", "evidence"],
+  "properties": {
+    "interface": { "type": "string", "pattern": "^IFC-(SYNC|ASYNC)-[0-9]{4}$" },
+    "volatile_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["field", "maskable"],
+        "properties": {
+          "field": { "type": "string" },
+          "maskable": { "type": "boolean" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "verdict": { "enum": ["GO", "NO-GO"], "description": "REQ-05. NO-GO blocks Stage 6 for this Interface (not Stage 1)." },
+    "rationale": { "type": "string" },
+    "evidence": { "$ref": "behavior.schema.json#/$defs/evidence" }
+  }
+}

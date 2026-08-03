@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "context-map.schema.json",
+  "title": "Context Map Relationship",
+  "type": "object",
+  "required": ["context_a", "context_b", "pattern", "evidence"],
+  "properties": {
+    "context_a": { "type": "string", "pattern": "^CTX-[0-9]{4}$" },
+    "context_b": { "type": "string", "pattern": "^CTX-[0-9]{4}$" },
+    "pattern": {
+      "enum": ["customer-supplier", "conformist", "anticorruption-layer", "shared-kernel",
+               "published-language", "open-host-service", "separate-ways", "partnership"],
+      "description": "Standard DDD context-map pattern (ddd-reference.md §1.3). Naming it is mandatory."
+    },
+    "upstream": {
+      "type": ["string", "null"],
+      "description": "Which of context_a/context_b is upstream, for directional patterns (customer-supplier, conformist, anticorruption-layer, open-host-service). Null for symmetric patterns (partnership, shared-kernel, separate-ways)."
+    },
+    "rationale": { "type": "string" },
+    "evidence": { "$ref": "behavior.schema.json#/$defs/evidence" }
+  }
+}

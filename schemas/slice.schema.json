@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "slice.schema.json",
+  "title": "Slice",
+  "type": "object",
+  "required": ["id", "workstream", "oracle_strategy", "behaviors", "state"],
+  "properties": {
+    "id":             { "type": "string", "pattern": "^SLC-[0-9]{4}$" },
+    "name":           { "type": "string" },
+    "workstream":     { "type": "string", "pattern": "^WS-[0-9]{4}$" },
+    "context":        { "type": ["string","null"], "pattern": "^CTX-[0-9]{4}$" },
+    "oracle_strategy":{ "enum": ["characterization", "specification"],
+                        "description": "SEAM S1.1 — v1 accepts only 'characterization'. Required, never optional." },
+    "behaviors":      { "type": "array", "items": { "type": "string", "pattern": "^BHV-[0-9]{4}$" },
+                        "description": "Non-empty when oracle_strategy is characterization. Left open for the specification oracle, where acceptance criteria carry the scope (seam S1.1)." },
+    "use_cases":      { "type": "array", "items": { "type": "string" } },
+    "state":          { "enum": ["Outlined","Designed","OracleFrozen","Building","Accepted"] },
+    "harness_lock":   { "type": ["string","null"], "description": "sha256 of the frozen characterization suite" },
+    "approvals":      { "type": "array", "items": { "$ref": "approval.schema.json" } }
+  }
+}

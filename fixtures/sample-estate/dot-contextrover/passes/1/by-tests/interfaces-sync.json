@@ -1,0 +1,8 @@
+[
+  { "kind": "sync", "name": "POST /orders", "owning_service": "orders-svc", "protocol": "http",
+    "sync": {"method":"POST","path":"/orders","status_codes":[201]}, "consumers": [], "consumers_complete": false,
+    "evidence": [{"source":"test","locator":"tests/test_orders.py:5"}] },
+  { "kind": "sync", "name": "POST /invoices", "owning_service": "billing-svc", "protocol": "http",
+    "sync": {"method":"POST","path":"/invoices"}, "consumers": [], "consumers_complete": false,
+    "evidence": [{"source":"test","locator":"tests/test_invoices.go:8"}] }
+]

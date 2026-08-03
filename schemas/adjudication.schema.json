@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "adjudication.schema.json",
+  "title": "Adjudication Record",
+  "type": "object",
+  "required": ["id", "stage", "k", "candidates", "decided_by", "decided_at"],
+  "properties": {
+    "id":    { "type": "string", "pattern": "^ADJ-[0-9]{4}$" },
+    "stage": { "type": "integer", "minimum": 0, "maximum": 8 },
+    "k":     { "type": "integer", "minimum": 1 },
+    "framings": { "type": "array", "items": { "type": "string" } },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["candidate_id", "found_by", "decision"],
+        "properties": {
+          "candidate_id": { "type": "string" },
+          "found_by":     { "type": "array", "items": { "type": "string" } },
+          "partition":    { "enum": ["all", "some", "one"] },
+          "decision":     { "enum": ["accept", "reject", "triage"] },
+          "rationale":    { "type": "string" }
+        }
+      }
+    },
+    "kind":       { "enum": ["consensus-run", "adjudication"],
+                    "description": "consensus-run = mechanical, agent-produced, re-executable. adjudication = an accountable human decision, only supersedable." },
+    "decided_by": { "type": "string",
+                    "description": "When kind == 'adjudication' this MUST be a human identity. An agent name here is a schema violation, not a shortcut — see 09-glossary.md §2." },
+    "decided_at": { "type": "string", "format": "date-time" },
+    "agreement_rate": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "if": { "required": ["kind"], "properties": { "kind": { "const": "adjudication" } } },
+  "then": {
+    "properties": {
+      "decided_by": {
+        "not": {
+          "enum": [
+            "sync-surface-extractor", "async-surface-extractor", "behavior-extractor",
+            "dependency-mapper", "consumer-mapper", "call-sequence-analyst",
+            "change-coupling-analyst", "divergence-detector", "redaction-policy-assessor",
+            "boundary-proposer", "spec-critic", "test-adversary"
+          ]
+        },
+        "description": "Mechanical proxy for 'must be a human identity': decided_by must not be one of the fixed v1 agent names (02-plan.md agent roster)."
+      }
+    }
+  }
+}

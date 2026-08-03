@@ -1,0 +1,10 @@
+[
+  {
+    "criterion": "leadership approval bound to the roadmap's version hash",
+    "artifact": "roadmap.json",
+    "version_hash": "sha256:1a539d30fa639d43fa740fb90f1ff432efa5bfd3eb6ee952c1421b67e8717cf7",
+    "decided_by": "Jane Doe (VP Engineering)",
+    "decided_at": "2026-08-01T15:00:00Z",
+    "rationale": "Increment 0 (Walking Skeleton) and the two-increment sequence for Ordering then Billing/Shipping approved. Forecast band is wide (±80%) given low Stage 1 agreement on this small estate; accepted with the explicit understanding that Increment 0 completion triggers a mandatory re-forecast."
+  }
+]

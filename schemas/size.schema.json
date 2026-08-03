@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "size.schema.json",
+  "title": "Slice Size",
+  "type": "object",
+  "required": ["slice", "behaviors", "interfaces_sync", "interfaces_async"],
+  "properties": {
+    "slice":                   { "type": "string", "pattern": "^SLC-[0-9]{4}$" },
+    "behaviors":               { "type": "integer", "minimum": 0 },
+    "failure_path_behaviors":  { "type": "integer", "minimum": 0 },
+    "interfaces_sync":         { "type": "integer", "minimum": 0 },
+    "interfaces_async":        { "type": "integer", "minimum": 0 },
+    "divergences_open":        { "type": "integer", "minimum": 0 },
+    "consumers_affected":      { "type": "integer", "minimum": 0 },
+    "data_migration_required": { "type": "boolean" }
+  },
+  "not": { "required": ["duration_days"] },
+  "description": "Contains no dates. Dates are produced only in Stage 4."
+}

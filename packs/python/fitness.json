@@ -1,0 +1,15 @@
+{
+  "language": "python",
+  "rules": [
+    {
+      "id": "no-domain-depends-on-adapter",
+      "description": "Domain packages must not import adapter packages (import-linter layer contract)",
+      "command": "lint-imports"
+    },
+    {
+      "id": "no-adapter-types-in-domain",
+      "description": "Domain packages must declare no adapter-layer types (import-linter independence contract)",
+      "command": "lint-imports --config .importlinter"
+    }
+  ]
+}

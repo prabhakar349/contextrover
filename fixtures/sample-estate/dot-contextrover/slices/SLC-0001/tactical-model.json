@@ -1,0 +1,18 @@
+{
+  "slice": "SLC-0001",
+  "aggregates": [
+    {
+      "name": "Order",
+      "root": "Order",
+      "entities": ["OrderLine"],
+      "value_objects": ["Quantity"],
+      "invariants": [
+        { "statement": "An Order is never created with a non-positive quantity", "behaviors": ["BHV-0004"] },
+        { "statement": "An Order transitions into PENDING at creation and an order.created event is emitted for every successfully created Order", "behaviors": ["BHV-0001"] }
+      ]
+    }
+  ],
+  "domain_events": [ { "name": "OrderPlaced", "aggregate": "Order" } ],
+  "commands": [ { "name": "PlaceOrder", "aggregate": "Order" } ],
+  "policies": [ "When OrderPlaced, notify Billing (via order.created)" ]
+}

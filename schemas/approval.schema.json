@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "approval.schema.json",
+  "title": "Approval Record",
+  "type": "object",
+  "required": ["criterion", "artifact", "version_hash", "decided_by", "decided_at"],
+  "properties": {
+    "criterion":    { "type": "string", "description": "The exact gate criterion being attested" },
+    "artifact":     { "type": "string" },
+    "version_hash": { "type": "string", "description": "sha256 of the artifact at approval time. Approval voids if this changes." },
+    "decided_by":   { "type": "string", "description": "Human identity. Never an agent name." },
+    "decided_at":   { "type": "string", "format": "date-time" },
+    "rationale":    { "type": "string" }
+  }
+}

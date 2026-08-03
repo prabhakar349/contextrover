@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "state.schema.json",
+  "title": "Stage State Ledger",
+  "type": "object",
+  "required": ["version", "stages"],
+  "properties": {
+    "version": { "type": "string" },
+    "plugin_root": { "type": "string",
+                      "description": "Absolute filesystem path where the contextrover plugin is installed. Set once by /rover-init (Claude Code exposes no built-in equivalent of ${CLAUDE_PLUGIN_ROOT} for command/agent markdown bodies, unlike hooks and skills). Every command resolves plugin-owned paths (schemas/, packs/, knowledge/, scripts/, stages.json) as plugin_root + relative path, never as a bare relative path, because a command's own working directory is the target repository, not the plugin's install location." },
+    "target":  { "type": "object", "properties": {
+                   "services":  { "type": "array", "items": { "type": "string" } },
+                   "languages": { "type": "array", "items": { "enum": ["java", "go", "python", "other"] } } } },
+    "stages": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-8]$": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status":       { "enum": ["not-started", "in-progress", "gate-failed", "complete"] },
+            "started_at":   { "type": "string", "format": "date-time" },
+            "completed_at": { "type": "string", "format": "date-time" },
+            "operator":     { "type": "string" },
+            "gate_result":  { "type": "object", "properties": {
+                                "passed":   { "type": "boolean" },
+                                "script":   { "type": "string" },
+                                "exit_code":{ "type": "integer" },
+                                "summary":  { "type": "string" } } },
+            "artifacts":    { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "counters": {
+      "type": "object",
+      "description": "Last-issued sequence number per ID prefix. Guarantees stable IDs across re-runs (REQ-31).",
+      "properties": {
+        "BHV": { "type": "integer" }, "IFC_SYNC": { "type": "integer" },
+        "SLC": { "type": "integer" }, "WS": { "type": "integer" },
+        "IFC_ASYNC": { "type": "integer" }, "DVG": { "type": "integer" },
+        "CTX": { "type": "integer" }, "ADJ": { "type": "integer" },
+        "WP": { "type": "integer", "description": "Waypoint counter (extension beyond the base spec pack)." }
+      }
+    }
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "intake.schema.json",
+  "title": "Engagement Intake",
+  "type": "object",
+  "required": ["version", "estate", "evidence", "default_oracle_strategy", "constraints",
+               "adapters", "capacity", "governance", "derived"],
+  "properties": {
+    "version": { "type": "string" },
+    "completed_at": { "type": ["string", "null"], "format": "date-time" },
+    "operator": { "type": "string" },
+    "estate": {
+      "type": "object",
+      "properties": {
+        "repos": { "type": "array", "items": { "type": "string" } },
+        "service_count": { "type": ["integer", "null"] },
+        "source_languages": { "type": "array", "items": { "enum": ["java", "go", "python", "other"] } },
+        "target_language": { "type": ["string", "null"] },
+        "has_orchestrator": { "type": ["boolean", "null"] },
+        "protocols": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "commit_history":      { "$ref": "#/$defs/evidence_availability" },
+        "access_logs":         { "$ref": "#/$defs/evidence_availability" },
+        "schema_registry":     { "$ref": "#/$defs/evidence_availability" },
+        "consumer_telemetry":  { "$ref": "#/$defs/evidence_availability" },
+        "traffic_capture":     { "$ref": "#/$defs/evidence_availability" },
+        "existing_tests":      { "$ref": "#/$defs/evidence_availability" }
+      }
+    },
+    "default_oracle_strategy": {
+      "enum": ["characterization", "specification"],
+      "description": "SEAM S1.6 — Engagement-level field recorded at intake, distinct from the per-Slice oracle_strategy. Keys Stage 1's agent roster in stages.json. v1 ships one key: 'characterization'."
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "approval_gated": { "type": ["boolean", "null"] },
+        "available_models": { "type": "array", "items": { "type": "string" } },
+        "ensemble_k": { "type": "integer", "minimum": 1 },
+        "air_gapped": { "type": "boolean" },
+        "timeline": { "type": ["string", "null"] },
+        "freeze_windows": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "adapters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["intent", "status"],
+        "properties": {
+          "intent": { "enum": ["yes", "no"] },
+          "system": { "type": ["string", "null"] },
+          "status": { "enum": ["ready", "unavailable", "disabled"] },
+          "mcp_tools": { "type": "array", "items": { "type": "string" } },
+          "config": { "type": "object" },
+          "reason": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "capacity": {
+      "type": "object",
+      "properties": {
+        "engineers": { "type": ["integer", "null"] },
+        "reviewers": { "type": ["integer", "null"] },
+        "pr_size_limit": { "type": "integer" },
+        "prs_per_reviewer_per_day": { "type": "number" },
+        "ci_cycle_minutes": { "type": ["number", "null"] },
+        "flake_rate": { "type": ["number", "null"] },
+        "deploys_per_week": { "type": ["number", "null"] },
+        "change_lead_time_days": { "type": "number" },
+        "env_contention": { "type": ["string", "null"] },
+        "walking_skeleton_days": { "type": "number" },
+        "freeze_windows": { "type": "array", "items": { "type": "string" } },
+        "onboarding_ramp_days": { "type": ["number", "null"] }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "properties": {
+        "success_metric_agreed": { "type": ["boolean", "null"] },
+        "mandated_count": { "type": ["integer", "null"] },
+        "mandate_owner": { "type": ["string", "null"] },
+        "boundary_approver": { "type": ["string", "null"] },
+        "sunset_authority": { "type": ["string", "null"] },
+        "gate_approvers": { "type": "object" }
+      }
+    },
+    "teams": {
+      "type": "array",
+      "description": "Section G (extension beyond the original six-section intake in 06-intake.md) — the team roster. Feeds Context.owning_team at Stage 2 (Team Topology, ddd-reference.md §4 rule 5) and Waypoint.teams in the Consumer Migration Workstream.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "owns_services": { "type": "array", "items": { "type": "string" },
+                              "description": "Services this team currently owns in the source estate, as of intake -- not a target-state assignment." },
+          "lead": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "delivery_mechanism": {
+      "type": "object",
+      "description": "Section G (extension) -- the org's actual release process, as distinct from the numeric capacity model in Section F / `capacity`. Used to sequence Stage 4 increments and Stage 8 cutover realistically against how this org actually ships.",
+      "properties": {
+        "model": { "enum": ["continuous", "release-train", "manual-gate", "other", "unknown"] },
+        "description": { "type": "string", "description": "Free text: environment promotion path, who gates what, release cadence." }
+      }
+    },
+    "derived": {
+      "type": "object",
+      "required": ["agents_enabled", "agents_disabled", "packs_loaded", "risks"],
+      "properties": {
+        "agents_enabled": { "type": "array", "items": { "type": "string" } },
+        "agents_disabled": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["agent", "reason"],
+            "properties": { "agent": { "type": "string" }, "reason": { "type": "string" } }
+          }
+        },
+        "packs_loaded": { "type": "array", "items": { "type": "string" } },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "severity", "statement", "blocks_gate"],
+            "properties": {
+              "id": { "type": "string" },
+              "severity": { "enum": ["high", "medium", "low"] },
+              "statement": { "type": "string" },
+              "blocks_gate": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "evidence_availability": {
+      "type": "object",
+      "properties": {
+        "available": { "type": ["boolean", "null"] },
+        "note": { "type": "string" },
+        "retention_days": { "type": ["integer", "null"] },
+        "policy_note": { "type": "string" }
+      }
+    }
+  }
+}

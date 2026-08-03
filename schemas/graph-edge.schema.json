@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "graph-edge.schema.json",
+  "title": "Graph Edge",
+  "type": "object",
+  "required": ["from", "to", "type", "evidence"],
+  "properties": {
+    "from": { "type": "string" },
+    "to": { "type": "string" },
+    "type": { "enum": ["exposes", "implements", "depends-on", "publishes", "consumes",
+                        "co-changes-with", "belongs-to", "covers", "diverges-from", "retires", "derived-from"] },
+    "evidence": { "type": "string", "description": "Which artifact or adjudication asserted this edge." }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "//": "Discovery permission profile (Constitution C3). Discovery agents get Read, Grep, Glob and nothing else, and run unattended — a subagent cannot surface a permission prompt, so anything not explicitly allowed here is silently denied, not queued.",
+  "permissions": {
+    "allow": ["Read", "Grep", "Glob"],
+    "deny": ["Write", "Edit", "Bash", "WebFetch", "WebSearch", "NotebookEdit"],
+    "defaultMode": "dontAsk"
+  }
+}

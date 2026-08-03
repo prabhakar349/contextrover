@@ -1,0 +1,29 @@
+[
+  {
+    "async": {
+      "delivery": "at-least-once",
+      "ordering_guarantee": "per-partition",
+      "partition_key": "id",
+      "topic": "order.created"
+    },
+    "consumers": [
+      {
+        "confidence": "high",
+        "evidence_source": "code-reference",
+        "identifier": "billing-svc"
+      }
+    ],
+    "consumers_complete": false,
+    "evidence": [
+      {
+        "locator": "services/orders-svc/app.py:20",
+        "source": "code"
+      }
+    ],
+    "id": "IFC-ASYNC-0001",
+    "kind": "async-published",
+    "name": "order.created",
+    "owning_service": "orders-svc",
+    "protocol": "kafka"
+  }
+]
