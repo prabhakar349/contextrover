@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+  <img src="assets/logo.svg" alt="" width="96">
+</picture>
+
 # contextrover
 
 **Domain-Driven Modernization (DDM):** spec-driven development where the spec is discovered, not declared.
