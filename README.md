@@ -7,15 +7,15 @@
 
 **Domain-Driven Modernization (DDM):** spec-driven development where the spec is discovered, not declared.
 
-ContextRover is a CLI-agent plugin that re-decomposes N existing services into M bounded-context-aligned services with **no unadjudicated behavioral change**, while serving both legacy and new interface surfaces at once. It supplies the stage that spec-driven development lacks — recovering an authoritative specification from a system that already works — and links every downstream artifact back to that evidence with a single traceability spine: `behavior → context → service(s) → surface → spec clause → characterization test → task → rollout check → retirement entry`.
+contextrover is a CLI-agent plugin that re-decomposes N existing services into M bounded-context-aligned services with **no unadjudicated behavioral change**, while serving both legacy and new interface surfaces at once. It supplies the stage that spec-driven development lacks — recovering an authoritative specification from a system that already works — and links every downstream artifact back to that evidence with a single traceability spine: `behavior → context → service(s) → surface → spec clause → characterization test → task → rollout check → retirement entry`.
 
-**What it is not:** a code generator for target services. ContextRover produces **evidence, specs, and verification harnesses** — implementation happens through ordinary spec-driven development downstream, using whatever tooling your team already uses. It is not organization-specific (zero internal content ships in this repository), and it is not a replacement for [GitHub Spec Kit](https://github.com/github/spec-kit) — it supplies the stage Spec Kit lacks (evidence extraction) and hands off cleanly to conventional SDD after Stage 5.
+**What it is not:** a code generator for target services. contextrover produces **evidence, specs, and verification harnesses** — implementation happens through ordinary spec-driven development downstream, using whatever tooling your team already uses. It is not organization-specific (zero internal content ships in this repository), and it is not a replacement for [GitHub Spec Kit](https://github.com/github/spec-kit) — it supplies the stage Spec Kit lacks (evidence extraction) and hands off cleanly to conventional SDD after Stage 5.
 
 Do not say "zero behavioral change." Say **"no unadjudicated behavioral change"** — every difference between old and new is either absent, or recorded with a named human owner and a rationale. The first claim is false the moment a difference is deliberately preserved as policy; the second survives audit.
 
 ## Relationship to Contexture
 
-[Contexture](https://github.com/trustbit/Contexture) (trustbit, MIT) is a Bounded Context Canvas wizard for capturing and visualizing a target context model — it documents *where you want to be*. ContextRover does the archaeology and delivery to *get there*. The two are complementary, not competing.
+[Contexture](https://github.com/trustbit/Contexture) (trustbit, MIT) is a Bounded Context Canvas wizard for capturing and visualizing a target context model — it documents *where you want to be*. contextrover does the archaeology and delivery to *get there*. The two are complementary, not competing.
 
 ## The nine stages
 
