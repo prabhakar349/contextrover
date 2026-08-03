@@ -1,3 +1,6 @@
+{"id": "ADAPTER-IFC-ASYNC-0001", "label": "Adapter for IFC-ASYNC-0001", "stage_added": 5, "type": "Adapter"}
+{"id": "ADAPTER-IFC-SYNC-0003", "label": "Adapter for IFC-SYNC-0003", "stage_added": 5, "type": "Adapter"}
+{"id": "AGG-SLC-0001-order", "label": "Order", "stage_added": 5, "type": "Aggregate"}
 {"confidence": "high", "id": "BHV-0001", "label": "Publishes an order.created event after an order is placed", "stage_added": 1, "target_services": ["orders-svc"], "type": "Behavior"}
 {"confidence": "high", "id": "BHV-0002", "label": "Creates an invoice with status OPEN when a new order.created event is consumed", "stage_added": 1, "type": "Behavior"}
 {"confidence": "medium", "id": "BHV-0003", "label": "Returns shipment tracking status for a given shipment id", "stage_added": 1, "type": "Behavior"}

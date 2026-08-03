@@ -6,5 +6,13 @@
     "decided_by": "Jane Doe (VP Engineering)",
     "decided_at": "2026-08-01T15:00:00Z",
     "rationale": "Increment 0 (Walking Skeleton) and the two-increment sequence for Ordering then Billing/Shipping approved. Forecast band is wide (±80%) given low Stage 1 agreement on this small estate; accepted with the explicit understanding that Increment 0 completion triggers a mandatory re-forecast."
+  },
+  {
+    "criterion": "superseded services decommissioned",
+    "artifact": "contexts/CTX-0001/decommission-checklist.md",
+    "version_hash": "sha256:0ebf50b8ec04ddeae4eeb70b0dfa24b29ff16b318ffb93d66d5409c9887e3031",
+    "decided_by": "Jane Doe",
+    "decided_at": "2026-08-01T18:30:00Z",
+    "rationale": "Every item on the CTX-0001 decommission checklist confirmed: both legacy Ordering interfaces at 47 zero-traffic days, both known consumers migrated, new-system observability live before teardown."
   }
 ]

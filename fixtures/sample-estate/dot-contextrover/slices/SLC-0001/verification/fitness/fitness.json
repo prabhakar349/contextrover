@@ -1,0 +1,16 @@
+{
+  "language": "python",
+  "note": "Fixture-local override for scripts/run-fitness.py --pack-dir. packs/python/fitness.json's real rules shell out to import-linter, which is real target-repo tooling not installed in the plugin's own dev environment (Constitution C8/C5 -- it's the target repo's dependency, not the plugin's). These two rules check the same two things (no domain logic in adapters, no adapter types in domain code) with simple, real, stdlib-only commands runnable here, to prove the Stage 6 gate mechanism itself rather than re-testing import-linter (already covered structurally in packs/python/fitness.json and T09's own tests).",
+  "rules": [
+    {
+      "id": "no-domain-logic-in-adapters",
+      "description": "Adapter specs (slices/SLC-0001/adapters/*.md) must stay markdown specs, not carry actual code",
+      "command": "python3 -c \"import glob,sys; files=glob.glob('dot-contextrover/slices/SLC-0001/adapters/*.md'); bad=[f for f in files if 'def ' in open(f).read()]; sys.exit(1 if bad else 0)\""
+    },
+    {
+      "id": "no-adapter-types-in-domain",
+      "description": "Domain source (orders-svc/app.py) must not reference adapter-layer types",
+      "command": "python3 -c \"import sys; text=open('services/orders-svc/app.py').read(); sys.exit(1 if 'Adapter' in text else 0)\""
+    }
+  ]
+}

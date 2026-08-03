@@ -6,7 +6,16 @@
   "oracle_strategy": "characterization",
   "behaviors": ["BHV-0001", "BHV-0004"],
   "use_cases": ["Place an order"],
-  "state": "Outlined",
-  "harness_lock": null,
-  "approvals": []
+  "state": "Accepted",
+  "harness_lock": "sha256:a2fddc235e47b61b494a0088200f24c96ecd764592a3e6cc5c8afeea1ca4ab22",
+  "approvals": [
+    {
+      "criterion": "architecture review approval, bound to artifact version hash, covering the judgment criterion \"no invariant requires a synchronous call to a sibling aggregate\"",
+      "artifact": "tactical-model.json",
+      "version_hash": "sha256:36b2f06dea2123734830bab0dfbf132c4b61102c5776a9bd04cb3109c623d238",
+      "decided_by": "Jane Doe",
+      "decided_at": "2026-08-01T16:00:00Z",
+      "rationale": "Order aggregate's two invariants are both self-contained -- no sibling-aggregate calls required. spec-critic's findings (uncited-clause risk on the legacy no-op publish behavior) addressed in design.md's Open Questions section rather than silently dropped."
+    }
+  ]
 }

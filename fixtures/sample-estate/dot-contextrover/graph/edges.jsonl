@@ -1,3 +1,7 @@
+{"evidence": "/Users/pdigumarthi/contextrover/fixtures/sample-estate/dot-contextrover/slices/SLC-0001/adapters/IFC-ASYNC-0001.md", "from": "ADAPTER-IFC-ASYNC-0001", "to": "IFC-ASYNC-0001", "type": "implements"}
+{"evidence": "/Users/pdigumarthi/contextrover/fixtures/sample-estate/dot-contextrover/slices/SLC-0001/adapters/IFC-SYNC-0003.md", "from": "ADAPTER-IFC-SYNC-0003", "to": "IFC-SYNC-0003", "type": "implements"}
+{"evidence": "slices/SLC-0001/tactical-model.json", "from": "AGG-SLC-0001-order", "to": "BHV-0001", "type": "implements"}
+{"evidence": "slices/SLC-0001/tactical-model.json", "from": "AGG-SLC-0001-order", "to": "BHV-0004", "type": "implements"}
 {"evidence": "inventory/behaviors.json", "from": "BHV-0001", "to": "CTX-0001", "type": "belongs-to"}
 {"evidence": "inventory/behaviors.json", "from": "BHV-0001", "to": "IFC-ASYNC-0001", "type": "implements"}
 {"evidence": "inventory/behaviors.json", "from": "BHV-0002", "to": "CTX-0002", "type": "belongs-to"}

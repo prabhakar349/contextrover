@@ -1,0 +1,9 @@
+{
+  "slice": "SLC-0001",
+  "denominator": "behaviors",
+  "total": 2,
+  "covered": 2,
+  "passing": 2,
+  "happy_path": { "total": 1, "covered": 1 },
+  "failure_path": { "total": 1, "covered": 1 }
+}

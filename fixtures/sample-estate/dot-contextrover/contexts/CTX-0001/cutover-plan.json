@@ -1,0 +1,44 @@
+{
+  "context": "CTX-0001",
+  "transition_profile": "shadow-canary-cutover-decommission",
+  "steps": [
+    {
+      "name": "shadow",
+      "status": "complete",
+      "diff_rate_threshold": 0.01,
+      "diff_rate_observed": 0.002,
+      "slo_gates_held": true,
+      "started_at": "2026-06-20T00:00:00Z",
+      "completed_at": "2026-07-05T00:00:00Z"
+    },
+    {
+      "name": "canary",
+      "status": "complete",
+      "diff_rate_threshold": 0.01,
+      "diff_rate_observed": 0.001,
+      "slo_gates_held": true,
+      "started_at": "2026-07-06T00:00:00Z",
+      "completed_at": "2026-07-15T00:00:00Z"
+    },
+    {
+      "name": "progressive-cutover",
+      "status": "complete",
+      "diff_rate_threshold": 0.01,
+      "diff_rate_observed": 0.0,
+      "slo_gates_held": true,
+      "started_at": "2026-07-16T00:00:00Z",
+      "completed_at": "2026-08-01T00:00:00Z"
+    },
+    {
+      "name": "decommission",
+      "status": "complete",
+      "started_at": "2026-08-01T00:00:00Z",
+      "completed_at": "2026-08-01T18:30:00Z"
+    }
+  ],
+  "interfaces_retired": [
+    { "interface_id": "IFC-SYNC-0003", "zero_traffic_days": 47 },
+    { "interface_id": "IFC-ASYNC-0001", "zero_traffic_days": 47 }
+  ],
+  "decommission_checklist_ref": "contexts/CTX-0001/decommission-checklist.md"
+}

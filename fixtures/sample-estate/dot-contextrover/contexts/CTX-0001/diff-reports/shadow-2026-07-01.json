@@ -1,0 +1,17 @@
+{
+  "step": "shadow",
+  "date": "2026-07-01",
+  "total_requests_compared": 500,
+  "diffs_found": 1,
+  "diff_rate": 0.002,
+  "diffs": [
+    {
+      "request": "POST /orders (quantity=1)",
+      "field": "order.created publish",
+      "legacy": "not published (documented no-op, see BHV-0001 evidence)",
+      "new": "published",
+      "adjudicated": true,
+      "note": "Expected, adjudicated difference (Defect, preserved-then-fixed per DVG-adjacent design.md Open Questions) -- excluded from diff-rate-threshold breach per observability-spec.md's comparison-period note."
+    }
+  ]
+}

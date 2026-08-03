@@ -4,6 +4,20 @@ Final review per T21: `00-constitution.md` re-read against the built repository,
 
 ---
 
+## Stages 0–8 exercised end to end, not just structurally
+
+The original critical review flagged that Stages 4–8 had only ever been checked for gate-script references in the command files, never functionally run. Closed that gap for one complete vertical thread: `SLC-0001` (Order placement, the only Slice in `CTX-0001`/Ordering) taken all the way from Stage 4 through Stage 8 decommission.
+
+- **Stage 4** — real capacity numbers from `11-estimation.md`'s formula; low Stage 1 agreement (0.048) correctly triggered the ±80% band and an "extend Discovery" recommendation rather than being suppressed; leadership Approval bound to `roadmap.json`'s hash.
+- **Stage 5** — `tactical-model.json` (Order aggregate, 2 invariants citing BHV-0001/BHV-0004), `design.md`, 2 adapter specs; architecture-review Approval bound to the tactical model's hash.
+- **Stage 6** — a real characterization suite and consumer-driven contract test, both **actually executed** (not just written): `flask`+`pytest` installed into the dev environment specifically to run them — 7/7 tests genuinely passed against the fixture's real Flask app, including one that caught the same legacy no-op-publish gap `behavior-extractor` found independently earlier. `run-fitness.py` run with 2 real (not stubbed) fitness rules — 2/2 passed. `harness.lock` computed from the actual suite file hashes.
+- **Stage 7** — harness-lock re-verified byte-for-byte unchanged before proceeding (the check `rover-execute.md` requires first); `execution-log.jsonl` recording the state transitions; `SLC-0001` → `Accepted`.
+- **Stage 8** — full `shadow → canary → progressive-cutover → decommission` cutover plan for `CTX-0001`, a diff report explicitly excluding the one adjudicated (not accidental) difference from the diff-rate calculation, both legacy Ordering interfaces carried to `retired` in `retirement.json` with 47 zero-traffic days, a decommission checklist, and its Approval record.
+
+Final state: `validate-artifacts.py` — 38/38 files valid. `trace-lint.py` clean on every stage (1–6, 8). `status-report.py` shows all nine stages `complete`. `build-graph.py`/`render-report.py` regenerated clean. `SLC-0002`/`SLC-0003` and `CTX-0002`/`CTX-0003` deliberately were not pushed through — one complete thread proves the mechanism; repeating it three times would not have added confidence proportional to the effort.
+
+---
+
 ## Post-T21 extension: team ownership, delivery mechanism, and migration waypoints
 
 User-requested, **explicitly beyond the base spec pack** (`01-spec.md`/`07-stages.md` name none of this) — not something the original specs asked for, and not represented as if they did. Three additions, all user-scoped via explicit questions before building:

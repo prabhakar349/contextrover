@@ -92,6 +92,79 @@
       "operator": "Jane Doe",
       "started_at": "2026-08-01T14:30:00Z",
       "status": "complete"
+    },
+    "5": {
+      "artifacts": [
+        "slices/SLC-0001/tactical-model.json",
+        "slices/SLC-0001/design.md",
+        "slices/SLC-0001/adapters/IFC-SYNC-0003.md",
+        "slices/SLC-0001/adapters/IFC-ASYNC-0001.md"
+      ],
+      "completed_at": "2026-08-01T16:00:00Z",
+      "gate_result": {
+        "exit_code": 0,
+        "passed": true,
+        "script": "trace-lint.py"
+      },
+      "operator": "Jane Doe",
+      "started_at": "2026-08-01T15:30:00Z",
+      "status": "complete",
+      "summary": "Per-Slice, JIT stage — reflects SLC-0001 (this fixture's only Slice run through Stage 5). SLC-0002/SLC-0003 remain Outlined."
+    },
+    "6": {
+      "artifacts": [
+        "slices/SLC-0001/verification/characterization/test_order_placement.py",
+        "slices/SLC-0001/verification/contracts/test_order_created_contract.py",
+        "slices/SLC-0001/verification/observability-spec.md",
+        "slices/SLC-0001/verification/coverage.json",
+        "slices/SLC-0001/harness.lock"
+      ],
+      "completed_at": "2026-08-01T17:00:00Z",
+      "gate_result": {
+        "exit_code": 0,
+        "passed": true,
+        "script": "trace-lint.py",
+        "summary": "7/7 characterization+contract tests actually executed and passing (pytest); 2/2 fitness rules passing (run-fitness.py)"
+      },
+      "operator": "Jane Doe",
+      "started_at": "2026-08-01T16:30:00Z",
+      "status": "complete",
+      "summary": "Per-Slice — reflects SLC-0001 only."
+    },
+    "7": {
+      "artifacts": [
+        "slices/SLC-0001/execution-log.jsonl"
+      ],
+      "completed_at": "2026-08-01T18:02:00Z",
+      "gate_result": {
+        "exit_code": 0,
+        "passed": true,
+        "script": "validate-artifacts.py",
+        "summary": "harness.lock verified unchanged before proceeding; full suite green; fitness green; SLC-0001 -> Accepted (terminal)"
+      },
+      "operator": "Jane Doe",
+      "started_at": "2026-08-01T17:30:00Z",
+      "status": "complete",
+      "summary": "Per-Slice — reflects SLC-0001 only, the only Slice in CTX-0001 (Ordering), unblocking that Context's Stage 8."
+    },
+    "8": {
+      "artifacts": [
+        "contexts/CTX-0001/cutover-plan.json",
+        "contexts/CTX-0001/diff-reports/shadow-2026-07-01.json",
+        "contexts/CTX-0001/decommission-checklist.md",
+        "approvals.json",
+        "retirement.json"
+      ],
+      "completed_at": "2026-08-01T18:30:00Z",
+      "gate_result": {
+        "exit_code": 0,
+        "passed": true,
+        "script": "trace-lint.py"
+      },
+      "operator": "Jane Doe",
+      "started_at": "2026-06-20T00:00:00Z",
+      "status": "complete",
+      "summary": "Per-Context — reflects CTX-0001 (Ordering) only, the only Context with all its Slices Accepted. CTX-0002/CTX-0003 have not reached Stage 8."
     }
   },
   "target": {
