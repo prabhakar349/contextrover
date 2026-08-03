@@ -24,6 +24,9 @@
       "enum": ["unclassified", "policy", "false-cognate", "defect"],
       "description": "policy = model as explicit domain variation; false-cognate = things that look like one concept but belong to different bounded contexts; defect = preserve, log, fix separately AFTER migration"
     },
+    "confidence": { "enum": ["high", "medium", "low", "unknown"],
+                    "description": "Confidence that this is a genuine Divergence rather than a discovery-pass artifact. Same convention as behavior.schema.json (REQ-09, C10)." },
+    "reason":     { "type": "string", "description": "Required when confidence is unknown." },
     "driving_dimension": { "type": "string", "description": "What actually varies: channel, product, tenant, mechanism" },
     "decision_owner":    { "type": "string" },
     "decided_at":        { "type": "string", "format": "date-time" },

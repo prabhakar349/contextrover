@@ -11,7 +11,7 @@
     "source_services": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
     "interfaces":    { "type": "array", "items": { "type": "string", "pattern": "^IFC-(SYNC|ASYNC)-[0-9]{4}$" } },
     "kind":          { "enum": ["validation", "calculation", "routing", "state-transition", "error-mapping", "side-effect", "emission", "other"] },
-    "failure_path":  { "type": "boolean", "description": "True if this describes failure, timeout or partial-completion behavior. Under-represented by default; see 01-spec DR1." },
+    "failure_path":  { "type": "boolean", "description": "True if this describes failure, timeout or partial-completion behavior. Under-represented in discovery by default -- treat as missing until found." },
     "evidence":      { "$ref": "#/$defs/evidence" },
     "confidence":    { "enum": ["high", "medium", "low", "unknown"] },
     "reason":        { "type": "string", "description": "Required when confidence is unknown" },

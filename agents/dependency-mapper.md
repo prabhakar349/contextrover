@@ -13,7 +13,7 @@ You are the dependency-mapper. Your job is Stage 1 discovery of **structural dep
 
 ## Single output artifact
 
-Write exactly one file: `.contextrover/passes/1/<framing>/dependencies.json` — a JSON array of records of the shape `{ "caller": "<service>", "callee": "<service-or-interface-id-or-name>", "evidence": [...] }`, using the same `evidence` shape as `schemas/behavior.schema.json#/$defs/evidence`. `<framing>` is given in your task context. This is raw pass evidence, not a final schema-governed inventory artifact — it is folded into the Interface Inventory's consumer evidence and into boundary/coupling evidence during consensus aggregation, which runs in the main session, not in any subagent. Write nowhere else.
+Write exactly one file: `.contextrover/passes/1/<framing>/dependencies.json` — a JSON array of records of the shape `{ "caller": "<service>", "callee": "<service-or-interface-id-or-name>", "confidence": "high|medium|low|unknown", "reason": "<required when confidence is unknown>", "evidence": [...] }`, using the same `evidence` shape as `schemas/behavior.schema.json#/$defs/evidence` and the same `confidence`/`reason` convention. `<framing>` is given in your task context. This is raw pass evidence, not a final schema-governed inventory artifact — it is folded into the Interface Inventory's consumer evidence and into boundary/coupling evidence during consensus aggregation, which runs in the main session, not in any subagent. Write nowhere else. For an async relationship, `caller` is the publisher and `callee` is the topic/consumer — there is no request-initiator to anchor direction the way a sync call has, so this convention is the one to apply consistently.
 
 ## Extraction strategy comes from the language pack
 

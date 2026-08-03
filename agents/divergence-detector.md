@@ -31,4 +31,4 @@ Report a divergence candidate even if you are not sure it matters — a spurious
 
 ## Unknowns
 
-Where you can see two services disagree but cannot pin down exactly what varies, still record the divergence with your best description and set the evidence excerpt to explain the uncertainty — never omit it (Constitution C10, REQ-09).
+Where you can see two services disagree but cannot pin down exactly what varies, still record the divergence with your best description and set the evidence excerpt to explain the uncertainty — never omit it (Constitution C10, REQ-09). Set the record's own `confidence` (`"unknown"` with a `reason` if you genuinely can't tell whether this is a real Divergence versus a coincidental naming clash) the same way you would on a Behavior record.

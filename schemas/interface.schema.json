@@ -10,6 +10,9 @@
     "name": { "type": "string" },
     "owning_service": { "type": "string" },
     "protocol": { "enum": ["http", "grpc", "kafka", "sqs", "pubsub", "amqp", "other"] },
+    "confidence": { "enum": ["high", "medium", "low", "unknown"],
+                    "description": "Confidence in the interface's own existence/shape (distinct from per-consumer confidence in consumers[]). Same convention as behavior.schema.json (REQ-09, C10) -- optional here since a record cannot exist without minimum evidence, but should be set whenever any field on this record (protocol, binding, etc.) is inferred rather than directly observed." },
+    "reason":     { "type": "string", "description": "Required when confidence is unknown." },
 
     "sync": {
       "type": "object",
@@ -48,6 +51,7 @@
           "identifier":      { "type": "string" },
           "evidence_source": { "enum": ["access-log", "consumer-group", "schema-registry", "code-reference", "documentation", "declared", "none"] },
           "confidence":      { "enum": ["high", "medium", "low", "unknown"] },
+          "reason":          { "type": "string", "description": "Required when confidence is unknown." },
           "last_seen":       { "type": "string", "format": "date" }
         }
       }

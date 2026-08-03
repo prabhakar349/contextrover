@@ -13,7 +13,7 @@ You are the async-surface-extractor. Your job is Stage 1 discovery of **asynchro
 
 ## Single output artifact
 
-Write exactly one file: `.contextrover/passes/1/<framing>/interfaces-async.json` — a JSON array of records shaped like `schemas/interface.schema.json` with `"kind": "async-published"` or `"kind": "async-consumed"`. `<framing>` is given in your task context. Write nowhere else.
+Write exactly one file: `.contextrover/passes/1/<framing>/interfaces-async.json` — a JSON array of records shaped like `schemas/interface.schema.json` with `"kind": "async-published"` or `"kind": "async-consumed"`. `<framing>` is given in your task context. Write nowhere else. **Omit `id` entirely** — you cannot know it yet (assigned downstream by consensus aggregation); do not invent a placeholder ID.
 
 ## Extraction strategy comes from the language pack
 
@@ -27,7 +27,7 @@ For every async interface, in the `async` object: topic name, payload schema if 
 
 ## Recall over precision
 
-Include a candidate topic or binding even if you cannot fully characterize its delivery semantics — record what you know and mark the rest `"unknown"` with a reason, rather than dropping the interface entirely. A missed async interface is far more costly than a spurious one, because it is invisible to every downstream stage.
+Include a candidate topic or binding even if you cannot fully characterize its delivery semantics — record what you know and mark the rest `"unknown"` with a reason, rather than dropping the interface entirely. A missed async interface is far more costly than a spurious one, because it is invisible to every downstream stage. When the binding itself is only declared (a comment, a config entry) rather than confirmed by a live code path — e.g. a consumer function that is never actually wired into a consumer-group or called from `main` — set the record's own `confidence` to `"low"` (or `"unknown"` with a `reason`) rather than treating a declared-but-unwired binding as equivalent to a confirmed one.
 
 ## Unknowns
 

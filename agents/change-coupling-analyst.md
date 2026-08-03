@@ -19,9 +19,9 @@ Write exactly one file: `.contextrover/passes/1/<framing>/coupling.json` — a J
 
 Read whatever commit history is available to you within this repository (log messages, diffs, file lists per commit) to find pairs of files or services that recur together across commits. This is the one discovery task in Stage 1 that is inherently about repository history rather than current-state code — read history where you can access it, and record what you find. If commit history is unavailable or too shallow to analyze (per the intake risk this stage inherits), say so explicitly rather than fabricating coupling data.
 
-## Extraction strategy comes from the language pack
+## Mapping files to services
 
-Where you need to map file-level coupling up to service-level coupling, read the language pack at the absolute path supplied in your task context as `pack_path` for how this ecosystem lays out service boundaries on disk, rather than assuming a layout (seam S3.2).
+Where you need to map file-level coupling up to service-level coupling, infer the mapping from the target repository's actual directory/module structure (e.g. a top-level directory per service) — this is estate-specific structure, not a language convention, and a language pack must never contain it (Constitution C4 bars organization-specific content from packs). Where the mapping is ambiguous, report the file-level coupling pair and note the service-level attribution as uncertain rather than guessing.
 
 ## Recall over precision
 
@@ -29,4 +29,4 @@ Report a coupling pair with a modest co-change count rather than filtering it ou
 
 ## Unknowns
 
-If commit history is available but a specific pair's coupling cannot be reliably attributed (e.g. ambiguous merge commits), record the pair with `"confidence": "unknown"` in the evidence excerpt and a reason — never invent a count (Constitution C10, REQ-09).
+If commit history is available but a specific pair's coupling cannot be reliably attributed (e.g. ambiguous merge commits, or history too shallow to distinguish genuine co-change from a single bulk initial commit), record the pair with the record's own `"confidence": "unknown"` and a `"reason"` — never invent a count (Constitution C10, REQ-09).

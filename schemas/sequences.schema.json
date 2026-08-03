@@ -8,10 +8,14 @@
     "id": { "type": "string", "pattern": "^SEQ-[0-9]{4}$" },
     "steps": {
       "type": "array", "minItems": 2,
-      "items": { "type": "string", "pattern": "^IFC-(SYNC|ASYNC)-[0-9]{4}$" },
-      "description": "Ordered interface calls forming a repeated multi-call pattern (REQ-07). These are the requirements for the new API."
+      "items": { "type": "string" },
+      "description": "Ordered interface calls forming a repeated multi-call pattern (REQ-07). These are the requirements for the new API. Each step is an Interface ID (`IFC-(SYNC|ASYNC)-NNNN`) once assigned -- a Stage 1 raw-pass candidate legitimately cannot know that ID yet (assigned downstream by consensus aggregation) and should instead cite the interface by name, method+path, or topic; scripts/consensus.py resolves these name-shaped references once Interfaces are ID-assigned."
     },
-    "frequency": { "type": "integer", "minimum": 1 },
+    "frequency": { "type": "integer", "minimum": 1,
+                   "description": "For a code-only framing (e.g. by-call-sites) this is a static call-site count, not a runtime invocation count -- do not estimate a traffic-derived number you have no evidence for." },
+    "confidence": { "enum": ["high", "medium", "low", "unknown"],
+                    "description": "Same convention as behavior.schema.json (REQ-09, C10)." },
+    "reason":     { "type": "string", "description": "Required when confidence is unknown." },
     "evidence": { "$ref": "behavior.schema.json#/$defs/evidence" }
   }
 }

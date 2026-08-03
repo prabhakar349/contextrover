@@ -26,6 +26,8 @@ Idiomatic Go tends to keep HTTP handlers thin and push logic into plain function
 
 The standard library's `testing` package, invoked via `go test`, using `net/http/httptest` to exercise the protocol boundary through real HTTP handling rather than calling handler functions directly with hand-built structs. Keep characterization tests in their own package or build-tagged file set (e.g. a `characterization` build tag) so `go test ./...` does not silently conflate them with pre-existing unit tests. Use `dockertest` or Testcontainers-go where dependencies need to be stood up for realistic comparison.
 
+**Masking conventions.** Common volatile fields in this ecosystem and how to mask them before comparison: `github.com/google/uuid` output and database auto-increment IDs — replace with a fixed placeholder or match against a shape regex rather than an exact value. `time.Now()`-derived timestamps (commonly serialized via `encoding/json`'s default RFC3339 handling for `time.Time` fields) — strip or replace with a placeholder. `encoding/json`'s `Encode`/`Marshal` preserves struct-field declaration order, so key order is not itself a volatility concern. A field is a masking candidate only when it varies between two calls with identical business input — a field that is part of the business response (e.g. a status that legitimately changes over an entity's lifecycle) is not volatility in this sense, even though it varies over time.
+
 ## 6. Build/CI integration
 
 `go build ./...` and `go test ./...` (or `go vet` for static checks), plus `go-arch-lint check` wired into the same CI step so an architecture violation fails the same way a test failure would.

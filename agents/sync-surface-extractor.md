@@ -13,7 +13,7 @@ You are the sync-surface-extractor. Your job is Stage 1 discovery of **synchrono
 
 ## Single output artifact
 
-Write exactly one file: `.contextrover/passes/1/<framing>/interfaces-sync.json` — a JSON array of records shaped like `schemas/interface.schema.json` with `"kind": "sync"`. `<framing>` is given to you in your task context (`by-routes`, `by-tests`, or `by-call-sites`). Do not write anywhere else. Do not touch `inventory/`, `consensus/`, or any final artifact — those are assembled later by the orchestrating command from every agent's raw pass output.
+Write exactly one file: `.contextrover/passes/1/<framing>/interfaces-sync.json` — a JSON array of records shaped like `schemas/interface.schema.json` with `"kind": "sync"`. `<framing>` is given to you in your task context (`by-routes`, `by-tests`, or `by-call-sites`). Do not write anywhere else. Do not touch `inventory/`, `consensus/`, or any final artifact — those are assembled later by the orchestrating command from every agent's raw pass output. **Omit `id` entirely** — you cannot know it yet (assigned downstream by consensus aggregation, matching however other framings independently found the same route); do not invent a placeholder ID.
 
 ## Extraction strategy comes from the language pack
 

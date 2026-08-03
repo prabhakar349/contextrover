@@ -5,7 +5,8 @@
   "type": "object",
   "required": ["interface", "volatile_fields", "verdict", "evidence"],
   "properties": {
-    "interface": { "type": "string", "pattern": "^IFC-(SYNC|ASYNC)-[0-9]{4}$" },
+    "interface": { "type": "string",
+                   "description": "Interface ID (`IFC-(SYNC|ASYNC)-NNNN`) once assigned -- a Stage 1 raw-pass candidate legitimately cannot know that ID yet (assigned downstream by consensus aggregation) and should instead cite the interface by name, method+path, or topic; scripts/consensus.py resolves these name-shaped references once Interfaces are ID-assigned." },
     "volatile_fields": {
       "type": "array",
       "items": {
@@ -14,7 +15,9 @@
         "properties": {
           "field": { "type": "string" },
           "maskable": { "type": "boolean" },
-          "note": { "type": "string" }
+          "note": { "type": "string" },
+          "confidence": { "enum": ["high", "medium", "low", "unknown"],
+                          "description": "E.g. a field that is not observably volatile in the evidence available but is conventionally a generated value (an id on a newly-created resource) should be flagged here rather than asserted as confirmed. Same convention as behavior.schema.json (REQ-09, C10)." }
         }
       }
     },
