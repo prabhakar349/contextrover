@@ -1,0 +1,1092 @@
+
+Cash Redemption Service — HLD + LLD
+Loyalty · Redemption subdomain
+High-level & low-level design · Draft for review
+Cash Redemption Service
+One microservice, one aggregate, five cash redemption types — Account Credit, Statement Credit, Purchase Eraser, ACH and Check — with a shared lifecycle spine and a pluggable disbursement rail per type.
+
+Scope
+Cash Redemption bounded context only. Gift Card, Shop with Points and Miles Transfer are sibling contexts.
+Replaces
+11 cash nano-services (ach-init/validate/post, statement-credit-*, purchase-eraser-*, account-credit-post, check-issue, cash-eligibility-*, cash-ledger-hold).
+Given constraints
+No central orchestrator. Each channel owns its own workflow state and its own database.
+Annual value
+≈ $900M cash redemption, Account Credit the dominant type. Dollar-heavy, not TPS-heavy.
+1. The answer in one page
+The question this document exists to answer: if there is no central orchestrator and each channel keeps its own database, how does one Cash service handle five redemption types that do not share an order of operations?
+
+The answer is to separate three things that the current 11-service estate has fused together:
+
+1 · Invariant
+The lifecycle spine
+Points are held, a disbursement is made, the hold is settled or released. True for all five types. Lives once, in the aggregate.
+2 · Varies by type
+The step order
+Data, not code: each subtype registers an ordered step recipe drawn from one shared step vocabulary. ACH verifies an instrument first; Purchase Eraser matches transactions first.
+3 · Varies by type
+The money rail
+One DisbursementAdapter per rail — NACHA file, card processor adjustment, DDA posting, check vendor — behind one Go interface.
+What follows from that: one aggregate root (CashRedemption) with a subtype discriminator, one lifecycle table, one workflow engine that is local to this service, and one adapter interface with five implementations. A new cash type is a row in a workflow definition plus one adapter — not a new service, not a new state machine, not a new database.
+
+Crucially, “no central orchestrator” is honoured, not circumvented. The orchestration that exists here is in-process and private: it never sequences another channel's work, never holds another channel's state, and is not a network dependency for Gift Card, Shop with Points or Miles. Cash owns cash. The only things shared across channels are the eligibility service, the ledger gateway, and the status event contract — exactly as the subdomain architecture specifies.
+
+The one sentence for the review board
+Cash Redemption is a single bounded context with a single aggregate whose shape is shared and whose sequence and rail are pluggable — so consolidating 11 services into 1 does not force five different processes into one process order.
+2. Scope and non-goals
+This service owns	Explicitly not owned
+The CashRedemption aggregate and its full lifecycle, for all five subtypes.	The points balance of record — that is the Ledger context, reached only through ledger-gateway-svc.
+Its own workflow state, step history and retry/compensation machinery, in its own Aurora schema.	Cross-channel orchestration. No other channel's order state ever lands here.
+Subtype-specific eligibility rule packs (matched-transaction rules, instrument verification state).	Common eligibility rules — balance sufficiency, velocity, fraud/KYC holds — which stay in eligibility-svc.
+All five disbursement rail integrations, as internal packages.	Member/product status (Account, consumed conformist) and points accrual (Earn).
+Emission of status events in the shared Published Language.	The cross-channel “where's my redemption” read model — redemption-status-svc.
+Reversal of a redemption after settlement (ACH return, stale check, chargeback).	Gift Card, Shop with Points, Miles Transfer lifecycles and databases.
+2.1 Decisions taken as given
+Decision	Consequence accepted	How this design absorbs it
+No central redemption orchestrator	Each channel builds its own saga machinery; no shared retry/compensation engine.	The engine is a library-shaped component inside this service (§7). It is small, generic and publishable as an internal Go module later if other channels want it — the migration from choreography to a shared engine stays additive.
+Database per redemption channel	No shared order table; no cross-channel joins.	Cash's Aurora schema is authoritative for cash orders. Cross-channel questions are answered by redemption-status-svc from events, never by reading these tables.
+Channel-specific process order is real	A single fixed pipeline would be wrong.	Step recipes as versioned data per subtype (§6.3), not per-subtype code branches.
+Eligibility stays centralised	A synchronous dependency in the hot path.	Called once per order at a subtype-chosen point in the recipe; the decision is snapshotted locally for audit and never re-fetched.
+2.2 Decision register
+Every architectural choice in this document, its live alternatives, and whether it is settled or still open for the review board. Decisions marked open are the ones this review exists to close.
+
+#	Decision	Options considered	Status
+ADR-1	Service granularity for cash	11 nano-services as-is · one service per subtype (5) · one Cash service for all five	Decided — §1, §4.6
+ADR-2	Where orchestration lives	Central redemption orchestrator · engine private to this service · external engine (Step Functions, Temporal)	Decided — §2.1, §7.8
+ADR-3	Aggregate shape	Five aggregates sharing clients · one root + subtype discriminator + pluggable rail	Decided — §4.2, §4.6
+ADR-4	Where subtype data lives	Satellite table per subtype · one table with guarded CHECKs · single JSONB column · unconstrained nullable columns	Open — recommendation §6.1
+ADR-5	How step recipes are expressed	Database definition tables · declarative config in the repo, delivered by AppConfig · Go declaration · external engine definition	Open — recommendation §7.8
+ADR-6	Where workflow state lives	Separate workflow_run table · folded into the order row · external store (DynamoDB / queue visibility)	Open — recommendation §6.8
+ADR-7	How canonical status is written	Set independently by each step · derived from recipe position, single writer	Recommended — §6.8
+ADR-8	When points settle	On rail submission · on rail settlement, per subtype policy	Open — §5.5, OQ-1
+ADR-9	Engine reuse across channels	Private to Cash initially · shared internal Go module · promoted to a platform service	Open — OQ-6
+3. High-level design
+3.1 Context map
+Callers
+Mobile app
+Online banking
+Call centre / servicing
+Branch tooling
+Batch / partner
+Redemption API edge — /v2/redemption (Published Language) · legacy nano-service facade · per-use-case router {client_id, type} → legacy | new
+cash-redemption-svc
+Supporting subdomain · Go · Fargate
+API / command handlers
+idempotent intake
+Domain
+CashRedemption aggregate
+Step engine + worker
+recipes, retries, compensation
+Rail adapters
+5 implementations
+Aurora PostgreSQL — cash_redemption schema · orders, workflow runs, holds, disbursements, outbox
+Platform dependencies (shared)
+eligibility-svc — gRPC, sync · Partnership
+ledger-gateway-svc — gRPC, sync · Anticorruption Layer to Ledger
+redemption-status-svc — consumes events · Published Language
+account-svc — status flags · Conformist
+Money rails (owned adapters)
+Core deposit system — DDA posting (Account Credit)
+Card processor — statement adjustment (Statement Credit, Purchase Eraser)
+ACH / NACHA origination + returns (ACH)
+Check print & mail vendor (Check)
+Card authorisation / posted-transaction feed (Purchase Eraser matching)
+Fig. 1 — Context map. Red boundary is the service under design; the shared platform services above it are the only cross-channel coupling.
+3.2 Internal architecture
+Hexagonal, four layers, one Go module. The layering exists to keep the five rails from leaking into the aggregate — the single most likely way this service degenerates back into five pipelines in one repo.
+
+Layer	Contains	Rule
+api/	gRPC + REST handlers, request validation, idempotency intake, legacy facade translation.	No business rules. Translates wire shapes to commands.
+app/	Command handlers, the step engine, the worker loop, transaction boundaries, outbox writes.	Orchestrates; holds no invariants. Never talks to a rail SDK directly.
+domain/	The aggregate, value objects, the status state machine, invariants, domain events, the step vocabulary as types.	Zero imports outside stdlib. Knows that a disbursement happens, never how.
+adapters/	Five rail adapters, ledger gateway client, eligibility client, Aurora repositories, SNS publisher.	One package per rail. A rail's quirks (SEC codes, cycle dates, void windows) stay inside its package.
+3.3 Runtime topology
+Process	Deployment	Responsibility
+api	Fargate service, ALB, autoscaled on RPS	Accepts commands, persists the order and step-1 intent, returns immediately. Never performs a rail call inline.
+worker	Fargate service, autoscaled on due-work depth	Claims due workflow runs, executes one step per transaction, publishes outbox events. Same binary, different entrypoint flag.
+ingest	Fargate service, SQS consumers	Rail callbacks and files: ACH acknowledgements and returns, check clearing feeds, cycle-posting confirmations, posted-transaction feed.
+scheduler	EventBridge Scheduler → SQS	Time-triggered steps: return-window expiry, stale-check evaluation, cycle-close sweeps, reconciliation.
+One binary, four entrypoints, one Aurora cluster (own schema, own credentials). The worker is the only writer of workflow progress, which keeps the concurrency model simple: at most one in-flight step per order, enforced by a lease.
+
+4. Domain model
+4.1 Ubiquitous language
+The five subtypes justify one bounded context precisely because they speak the same language. Where a word means something different per subtype, that word belongs in the rail adapter, not the aggregate.
+
+Term	Meaning in this context
+Redemption	A member's request to exchange a points amount for a cash-equivalent value through one cash channel. The aggregate.
+Tender / Points	The points being spent. Denominated in points, converted at a rate captured at request time.
+Hold	A reservation of points in the Ledger. Not a debit. Reversible by release.
+Settle	Converting a hold into a permanent points debit. Happens once, after the cash side is judged final.
+Release	Cancelling an unsettled hold; points return to available with no ledger movement recorded against the member.
+Disbursement	The cash-side movement: a DDA credit, a statement adjustment, an ACH entry, or a printed check. One attempt against one rail.
+Instrument	What receives the money: a deposit account, a card account, an external bank account, a mailing address.
+Rail	The external system that effects a disbursement.
+Reversal	A post-settlement correction: the cash came back (ACH return, stale check) so points are restored by a new compensating ledger entry.
+Step recipe	The ordered list of steps a given subtype runs. Versioned data.
+4.2 The aggregate
+CashRedemption
+Aggregate root · consistency boundary · one transaction
+Identity & shared shape
+id · subtype (discriminator) · status · version
+memberRef · loyaltyAccountRef
+points · cashAmount · conversionRate
+originChannel · requestingClient · idempotencyKey
+Value object — polymorphic, one per subtype
+DisbursementInstruction (interface)
+AccountCreditInstruction · StatementCreditInstruction
+PurchaseEraserInstruction · AchInstruction · CheckInstruction
+Immutable after acceptance. Carries tokens, never raw account numbers.
+Entities inside the boundary
+LedgerHold — 0..1 active, 0..n historical
+Disbursement — 1..n (reissue chain)
+StepExecution — 1..n, append-only history
+EligibilityDecision — 0..1 snapshot
+Reversal — 0..n
+Subtype-only child collection
+ErasedTransaction — 0..n, Purchase Eraser only.
+The one place a subtype adds a collection rather than fields. Modelled as a child of the instruction, not of the root.
+Outside the boundary, referenced by id only: Member · Loyalty account · Ledger entry · Eligibility rule set version · Workflow definition
+Fig. 2 — The aggregate. One root for all five subtypes; the only polymorphism is the instruction value object and its rail.
+4.3 What varies, what does not
+This table is the design. If a future subtype needs something outside the right-hand column, it is a candidate for its own bounded context — not another discriminator value.
+
+Concern	Shared across all five	Varies by subtype
+Aggregate identity and lifecycle status	Yes — one status enum, one meaning per value	—
+Points hold / settle / release semantics	Yes — identical ledger interaction	When settle fires (§5.5)
+Eligibility call and decision snapshot	Yes — one contract, one audit shape	Rule pack name; position in the recipe
+Order of operations	—	Yes — step recipe per subtype
+Instrument being credited	Concept only	Yes — instruction value object
+Money rail and its confirmation model	Adapter interface	Yes — five implementations
+Reversal window and trigger	Reversal entity and ledger restore path	Yes — none / 5 business days / 180 days
+Retry, compensation, audit, status events	Yes — one engine, one outbox, one event schema	—
+4.4 Invariants
+Each invariant names where it is enforced. Anything financial is enforced twice — in the aggregate and in the database — because a Go bug must not be able to double-debit a member.
+
+#	Invariant	Enforced by
+I1	At most one active (requested or held) ledger hold per redemption.	Aggregate + partial unique index uq_one_active_hold
+I2	A hold is settled at most once; a settled hold is never released.	Aggregate state machine + hold state CHECK
+I3	points × sc-camel-conversion-rate = cashAmount, rate frozen at acceptance.	Aggregate constructor; rate persisted, never re-read
+I4	A disbursement is submitted to a rail at most once per idempotency key; retries reuse the key.	Intent-first write + unique disbursement.idempotency_key
+I5	A posted card transaction is erased at most once across all open redemptions.	Partial unique index on erased_transaction.txn_ref
+I6	Sum of applied amounts across erased transactions ≤ cashAmount.	Aggregate, on match acceptance
+I7	Terminal statuses (completed, failed, cancelled) accept no further step transitions; only a Reversal may follow completed.	Status state machine (§5.1)
+I8	Step history is append-only; an order's step sequence never decreases.	No UPDATE on outcome rows; optimistic lock on version
+I9	Every status change emits exactly one status event.	Outbox row written in the same transaction as the change
+I10	An instruction is immutable once the order leaves received.	Aggregate; instruction columns written once
+4.5 Domain events
+Internal domain events drive the local state machine; a subset is published outward in the shared Published Language (§8.3). The distinction matters: DisbursementAcknowledged is nobody else's business, RedemptionFulfilled is.
+
+Event	Published	Raised when
+RedemptionRequested	Yes	Command accepted and persisted; nothing has moved yet.
+EligibilityDecided	Yes (outcome only)	Decision snapshot stored, approved or declined with reasons.
+PointsHeld / HoldReleased / PointsSettled	Yes	Ledger gateway confirms the corresponding operation.
+DisbursementSubmitted / Acknowledged / Settled / Returned	Submitted + Settled + Returned	Rail adapter reports a state change (inline result or ingested callback).
+TransactionsMatched	No	Purchase Eraser matching step completes; carries matched total.
+RedemptionFulfilled / Failed / Cancelled	Yes	Terminal outcome reached.
+RedemptionCompensated / Reversed	Yes	Pre-settlement rollback completed / post-settlement reversal completed.
+4.6 Alternatives rejected
+Model	Why it was considered	Why rejected
+Five aggregates sharing clients	Honest about differing process order; each type evolves alone.	Recreates the 11-service estate inside one repo. Five status enums drift; five retry loops; five audit shapes. Nothing is actually consolidated but the deploy unit.
+One aggregate, one hard-coded pipeline	Simplest engine.	Wrong for ACH (verify instrument before hold) and Purchase Eraser (match before eligibility). Forces per-subtype if branches into the shared path — the failure mode the team already rejected at platform level.
+Subtype detail in a single JSONB column	Zero migrations to add a subtype.	Loses NOT NULL and referential integrity on money-bearing fields; makes ops queries (“all unsettled ACH over $10k”) untypeable. Acceptable for step config, not for instruments.
+Workflow recipes as Go code per subtype	Type-safe, no definition tables.	Changing a step order becomes a deploy; in-flight orders straddle two orderings with no version to pin to. Recipes as versioned data let in-flight orders finish on the definition they started with.
+5. Lifecycle and workflow
+5.1 Canonical status model
+One status enum for all five subtypes — this is what makes a single cash service worth building, and it is also the vocabulary the shared status read model receives from every channel. Fine-grained progress lives in step history, not in status.
+
+received
+→
+authorizing
+→
+authorized
+hold placed
+→
+fulfilling
+rail submitted
+→
+awaiting_
+settlement
+→
+completed
+points settled
+Off-ramp before hold
+any → failed · cancelled
+no ledger movement to undo
+Off-ramp after hold
+any → compensating → compensated → failed
+release hold, void rail attempt
+After completion
+completed → reversed
+new compensating ledger entry; never a rollback
+Fig. 3 — Canonical status spine, identical for all five subtypes. Subtypes differ in which statuses they dwell in and for how long, never in what a status means.
+From	To	Trigger	Guard
+received	authorizing	First step claimed by worker	Workflow definition resolved and active
+authorizing	authorized	PointsHeld	Eligibility approved; exactly one active hold (I1)
+authorizing	failed	EligibilityDecided(declined)	No hold exists
+authorized	fulfilling	DisbursementSubmitted	Hold in held; adapter returned a rail reference
+fulfilling	awaiting_settlement	DisbursementAcknowledged	Subtype has an asynchronous confirmation (ACH, Check, Statement Credit)
+fulfilling / awaiting_settlement	completed	PointsSettled	Rail state final per subtype settlement policy (§5.5)
+authorized / fulfilling	compensating	Step exhausted retries, or member cancellation accepted	Rail attempt is voidable or never submitted
+compensating	compensated → failed	HoldReleased + rail void confirmed	All compensations idempotently confirmed
+completed	reversed	ACH return, stale check, chargeback, ops adjustment	Within the subtype's reversal window; reversal entity created
+5.2 Shared step vocabulary
+Eleven step kinds cover all five subtypes. A step kind is a Go handler plus a compensation; nothing else in the service may perform a side effect.
+
+Step kind	Does	Compensation
+validate_request	Structural + instrument-shape validation, duplicate detection, amount bounds.	None (no side effect)
+match_transactions	Pulls posted card transactions in window, applies the MCC/date rule pack, reserves matched rows.	Release matched rows
+verify_instrument	Confirms the destination is usable: external account verification, address validation, card status.	None
+check_eligibility	One gRPC call to eligibility-svc with the subtype rule pack; snapshots the decision.	None
+place_hold	Ledger hold for the points amount, via ledger gateway.	release_hold
+submit_disbursement	Rail adapter Submit. Intent row written before the call.	void_disbursement where the rail permits
+await_rail_confirmation	Parks the run until an ingested callback or a scheduled poll resolves the rail state.	Stop waiting; escalate
+settle_hold	Converts the hold to a permanent points debit.	None — past this point only reverse
+notify_member	Emits the notification event (owned by the notification platform).	None
+watch_reversal_window	Keeps the order observable for its return window; closes it on expiry.	None
+reverse	Restores points and records the claw-back after settlement.	Terminal
+5.3 Per-subtype step recipes
+This is the artefact to argue in review: the columns genuinely differ in order, and the rows are shared. Numbers are the step sequence within that subtype's recipe. How the recipe itself is authored and shipped — database rows, repo config, or Go — is ADR-5, argued in §7.8.
+
+Step kind	Account
+Credit	Statement
+Credit	Purchase
+Eraser	ACH	Check
+validate_request	1	1	1	1	1
+match_transactions	—	—	2	—	—
+verify_instrument	2	2	3	2	2
+check_eligibility	3	3	4	3	3
+place_hold	4	4	5	4	4
+submit_disbursement	5	5	6	5	5
+await_rail_confirmation	—	6	7	6	6
+settle_hold	6	7	8	7	7
+notify_member	7	8	9	8	8
+watch_reversal_window	—	—	—	9	9
+Read the differences: Purchase Eraser must know the matched total before eligibility can judge the amount, so match_transactions precedes check_eligibility. ACH and Check verify the destination before any hold, because an unverifiable instrument should never freeze a member's points. Account Credit posts synchronously and therefore has no waiting step at all. None of that required a second service, a second status model, or a second retry mechanism.
+
+5.4 Failure and compensation matrix
+Failure	Retry policy	Compensation	Member-visible outcome
+Eligibility declines	None	None needed	failed with decline reasons; points never touched
+Eligibility unavailable	5 attempts, exp. backoff to 15 min	None	Stays authorizing; then failed as “try again later”
+Hold rejected (insufficient points)	None	None	failed; balance changed between quote and hold
+Rail submit fails deterministically (bad account, closed card)	None	release_hold	failed; points returned within seconds
+Rail submit times out / unknown	Reconcile-then-retry with the same idempotency key	None until state is known	Stays fulfilling; never double-submitted (I4)
+Rail confirmation never arrives	Scheduled poll, then ops alert at SLA breach	Manual decision path	awaiting_settlement with an ops queue entry
+ACH return after settlement (R01/R02/R03…)	n/a — ingested event	reverse: restore points, record claw-back	reversed; points back, member notified with return reason
+Check not cashed within staleness window	n/a — scheduled	Void, then reissue or reverse	reversed or a new disbursement in the reissue chain
+Settle fails after successful disbursement	Retry indefinitely with alert	None — must not release; money already moved	Stays awaiting_settlement; hard alert. Losing the debit is worse than a slow status.
+Member cancels	n/a	Allowed only while the rail attempt is voidable	cancelled, or refused with “already in flight”
+5.5 Settlement policy per subtype
+The one genuinely contentious table in this document: the moment points become a permanent debit. It is an accounting decision, not an engineering one, and it needs Finance sign-off before build (§12, OQ-1).
+
+Subtype	Settle on	Typical elapsed	Reversal window
+Account Credit	Core deposit posting acknowledgement	Seconds	Ops adjustment only
+Statement Credit	Card processor cycle-posting confirmation	Same day to next cycle	Ops adjustment only
+Purchase Eraser	Statement adjustment posted against matched transactions	Same day to next cycle	Chargeback on an erased transaction
+ACH	Rail settlement (T+1 / T+2)	1–2 business days	Return codes, up to 5 business days after settlement
+Check	Issuance and mailing confirmation	1–2 business days	Staleness window (commonly 180 days), then void / reissue / escheat
+6. Database model
+6.1 Options — where subtype data lives ADR-4 · open
+One aggregate, one lifecycle table: cash_redemption carries the discriminator and everything the five subtypes share, and is the only table an ops query or a status projection needs to read. That much is settled. What is not settled is where the ~31 subtype-specific columns go, and the answer changes the schema materially.
+
+One observation reframes the whole question. Roughly half of what looks like subtype data is not order data at all — it is rail progress: trace_number, effective_entry_date, posted_cycle_id, mailed_at, cleared_at, void_reason, return_deadline_at. Those describe the attempt on the rail, not the redemption, and belong on disbursement (which already exists, is already shared across subtypes, and already carries a reissue chain) plus a rail_detail jsonb for the genuinely rail-shaped remainder. Move them and the subtype residue collapses to three to five immutable, write-once identification fields per subtype — a token, a last-4, an account type, a rule pack. That is a value object, always read and written whole, never queried alone.
+
+Option	Consequence	Verdict
+A — Satellite table per subtype, 1:1 on the primary key (as drafted in Listing 2)	Five thin tables, each fully NOT NULL-constrained. One PK join on read. Rail progress duplicated between satellite and disbursement.	Viable, and the safest if rail progress is not moved. Five tables, five migrations and five repository branches for what is one value object.
+B — One table, discriminator-guarded CHECK constraints + rail progress on disbursement	~12 nullable columns, integrity enforced conditionally: CHECK (subtype <> 'ach' OR (ext_acct_token IS NOT NULL AND acct_type IS NOT NULL)). No join. Fully typed and indexable.	Recommended. Keeps the integrity argument that motivated A — a guarded CHECK refuses an ACH row with a null token exactly as NOT NULL would — while collapsing five tables into zero.
+C — Single JSONB instruction column	No migration to add a subtype. No constraints, no typed indexes; ops queries over instrument fields become JSON path expressions.	Rejected for instruments; correct for step config and raw rail payloads, where the shape genuinely is opaque.
+D — Nullable columns, no constraints	Simplest to write; the database can represent an ACH order with no destination.	Rejected. This is option B minus the only thing that makes B safe.
+Either A or B leaves the domain model untouched: one root, one status, one lifecycle, one repository, one transaction. The difference is only how the repository materialises a value object. The rule worth adopting: a subtype earns its own table when it has its own child collection or its own independently-mutable lifecycle — not merely extra fields. Exactly one of the five qualifies, which is why erased_transaction survives under every option.
+
+6.2 Table landscape
+Order core
+cash_redemption — root: subtype, status, version, points, cash, member, idempotency
+cr_account_credit · cr_statement_credit · cr_purchase_eraser · cr_ach · cr_check — 1:1 satellites
+erased_transaction — 0..n, Purchase Eraser only
+eligibility_decision — snapshot, immutable
+Money movement
+ledger_hold — 0..1 active per order, state + refs
+disbursement — 1..n, rail, external ref, reissue chain
+disbursement_event — append-only rail callbacks (R-codes, cleared, void)
+reversal — 0..n post-settlement corrections
+Workflow
+workflow_definition · workflow_step_definition — recipes as versioned data
+workflow_run — 1:1 with order: current seq, lease, next_run_at
+workflow_step — append-only attempt log per step
+Integration & audit
+outbox — status events, partitioned by order id for ordering
+inbox — inbound message dedupe
+api_idempotency — stored responses per client key
+audit_log — actor-attributed, append-only, 7-year retention
+Fig. 4 — Twenty tables in four clusters, as drafted. Bold tables are the ones a reviewer should read first; everything else is history, dedupe or definition. Adopting the recommendations on ADR-4 (§6.1), ADR-5 (§7.8) and ADR-6 (§6.8) removes eight of them: twenty → twelve.
+6.3 DDL — order core
+CREATE TYPE cash_subtype AS ENUM
+  ('account_credit','statement_credit','purchase_eraser','ach','check');
+
+CREATE TYPE redemption_status AS ENUM
+  ('received','authorizing','authorized','fulfilling','awaiting_settlement',
+   'completed','failed','cancelled','compensating','compensated','reversed');
+
+CREATE TABLE cash_redemption (
+  id                 uuid PRIMARY KEY,
+  subtype            cash_subtype      NOT NULL,
+  status             redemption_status NOT NULL DEFAULT 'received',
+  version            integer           NOT NULL DEFAULT 1,        -- optimistic lock
+  member_id          uuid              NOT NULL,
+  loyalty_account_id uuid              NOT NULL,
+  points_amount      bigint            NOT NULL CHECK (points_amount > 0),
+  cash_amount_minor  bigint            NOT NULL CHECK (cash_amount_minor > 0),
+  currency           char(3)           NOT NULL DEFAULT 'USD',
+  conversion_rate    numeric(12,6)     NOT NULL,                  -- frozen at acceptance
+  origin_channel     text              NOT NULL,                  -- mobile|web|ivr|branch|batch
+  requesting_client  text              NOT NULL,                  -- drives migration routing
+  idempotency_key    text              NOT NULL,
+  correlation_id     uuid              NOT NULL,
+  requested_by       text              NOT NULL,                  -- member|agent:<id>|system
+  requested_at       timestamptz       NOT NULL,
+  completed_at       timestamptz,
+  failure_code       text,
+  CONSTRAINT uq_cr_idem UNIQUE (requesting_client, idempotency_key)
+);
+
+CREATE INDEX ix_cr_member   ON cash_redemption (member_id, requested_at DESC);
+CREATE INDEX ix_cr_open     ON cash_redemption (subtype, status)
+  WHERE status NOT IN ('completed','failed','cancelled','reversed');
+Listing 1 — The one lifecycle table. Every column here is meaningful for all five subtypes.
+6.4 DDL — subtype satellites
+CREATE TABLE cr_account_credit (
+  redemption_id     uuid PRIMARY KEY REFERENCES cash_redemption(id),
+  deposit_acct_token text NOT NULL,          -- vault token, never a raw account number
+  deposit_acct_last4 char(4) NOT NULL,
+  memo_line          text,
+  posted_at          timestamptz
+);
+
+CREATE TABLE cr_statement_credit (
+  redemption_id      uuid PRIMARY KEY REFERENCES cash_redemption(id),
+  card_acct_token    text NOT NULL,
+  card_last4         char(4) NOT NULL,
+  target_cycle_close date NOT NULL,
+  posted_cycle_id    text,
+  posted_at          timestamptz
+);
+
+CREATE TABLE cr_purchase_eraser (
+  redemption_id      uuid PRIMARY KEY REFERENCES cash_redemption(id),
+  card_acct_token    text    NOT NULL,
+  match_window_days  smallint NOT NULL DEFAULT 90,
+  rule_pack          text    NOT NULL,       -- e.g. 'eraser_travel_v3'
+  matched_total_minor bigint NOT NULL DEFAULT 0,
+  CONSTRAINT ck_eraser_total CHECK (matched_total_minor >= 0)
+);
+
+CREATE TABLE cr_ach (
+  redemption_id      uuid PRIMARY KEY REFERENCES cash_redemption(id),
+  ext_acct_token     text    NOT NULL,
+  routing_last4      char(4) NOT NULL,
+  acct_last4         char(4) NOT NULL,
+  acct_type          text    NOT NULL CHECK (acct_type IN ('checking','savings')),
+  sec_code           char(3) NOT NULL DEFAULT 'PPD',
+  verified_at        timestamptz,             -- verify_instrument outcome
+  effective_entry_date date,
+  trace_number       text,
+  return_deadline_at timestamptz              -- drives watch_reversal_window
+);
+
+CREATE TABLE cr_check (
+  redemption_id   uuid PRIMARY KEY REFERENCES cash_redemption(id),
+  payee_name      text NOT NULL,
+  address_hash    text NOT NULL,              -- verified address snapshot reference
+  print_vendor    text NOT NULL,
+  check_number    text,
+  mailed_at       timestamptz,
+  cleared_at      timestamptz,
+  stale_after     date,
+  void_reason     text
+);
+
+CREATE TABLE erased_transaction (
+  id             uuid PRIMARY KEY,
+  redemption_id  uuid   NOT NULL REFERENCES cr_purchase_eraser(redemption_id),
+  txn_ref        text   NOT NULL,
+  txn_posted_at  timestamptz NOT NULL,
+  mcc            char(4) NOT NULL,
+  merchant_name  text,
+  amount_minor   bigint NOT NULL,
+  applied_minor  bigint NOT NULL CHECK (applied_minor > 0),
+  released_at    timestamptz
+);
+
+-- I5: a posted transaction may be erased once, unless the reservation was released
+CREATE UNIQUE INDEX uq_erased_once ON erased_transaction (txn_ref)
+  WHERE released_at IS NULL;
+Listing 2 — Satellites. Note every instrument field is NOT NULL, which the nullable-columns option could not have expressed.
+6.5 DDL — money movement
+CREATE TABLE ledger_hold (
+  id              uuid PRIMARY KEY,
+  redemption_id   uuid   NOT NULL REFERENCES cash_redemption(id),
+  ledger_hold_ref text,                        -- assigned by Ledger via gateway
+  points_amount   bigint NOT NULL CHECK (points_amount > 0),
+  state           text   NOT NULL CHECK (state IN
+                    ('requested','held','settled','released','failed')),
+  idempotency_key text   NOT NULL UNIQUE,      -- deterministic, see §10.2
+  placed_at       timestamptz,
+  settled_at      timestamptz,
+  released_at     timestamptz,
+  release_reason  text,
+  CONSTRAINT ck_hold_terminal CHECK (
+    (state = 'settled' AND settled_at IS NOT NULL AND released_at IS NULL) OR
+    (state = 'released' AND released_at IS NOT NULL AND settled_at IS NULL) OR
+    (state IN ('requested','held','failed'))
+  )
+);
+
+-- I1: at most one active hold per redemption
+CREATE UNIQUE INDEX uq_one_active_hold ON ledger_hold (redemption_id)
+  WHERE state IN ('requested','held');
+
+CREATE TABLE disbursement (
+  id              uuid PRIMARY KEY,
+  redemption_id   uuid   NOT NULL REFERENCES cash_redemption(id),
+  rail            text   NOT NULL,             -- dda|card_processor|ach|check_vendor
+  amount_minor    bigint NOT NULL CHECK (amount_minor > 0),
+  state           text   NOT NULL CHECK (state IN
+                    ('intent','submitted','acknowledged','settled',
+                     'returned','voided','failed')),
+  external_ref    text,
+  idempotency_key text   NOT NULL UNIQUE,      -- reused verbatim on every retry (I4)
+  supersedes_id   uuid REFERENCES disbursement(id),   -- reissue chain
+  attempt         smallint NOT NULL DEFAULT 0,
+  submitted_at    timestamptz,
+  confirmed_at    timestamptz,
+  settled_at      timestamptz,
+  last_error      text
+);
+CREATE INDEX ix_disb_open ON disbursement (rail, state)
+  WHERE state IN ('intent','submitted','acknowledged');
+
+CREATE TABLE disbursement_event (        -- append-only; the rail's side of the story
+  id              bigserial PRIMARY KEY,
+  disbursement_id uuid NOT NULL REFERENCES disbursement(id),
+  kind            text NOT NULL,          -- ack|settled|return|cleared|void|nsf
+  rail_code       text,                   -- e.g. 'R01'
+  occurred_at     timestamptz NOT NULL,
+  received_at     timestamptz NOT NULL DEFAULT now(),
+  payload         jsonb NOT NULL
+);
+
+CREATE TABLE reversal (
+  id                  uuid PRIMARY KEY,
+  redemption_id       uuid   NOT NULL REFERENCES cash_redemption(id),
+  trigger             text   NOT NULL,     -- ach_return|check_stale|chargeback|ops
+  rail_code           text,
+  points_restored     bigint NOT NULL CHECK (points_restored > 0),
+  cash_recovered_minor bigint NOT NULL DEFAULT 0,
+  ledger_entry_ref    text,
+  idempotency_key     text   NOT NULL UNIQUE,
+  state               text   NOT NULL,     -- pending|completed|failed
+  created_at          timestamptz NOT NULL DEFAULT now(),
+  completed_at        timestamptz
+);
+Listing 3 — Money movement. The two partial unique indexes are the financial safety net behind invariants I1 and I4.
+6.6 DDL — workflow and integration
+CREATE TABLE workflow_definition (
+  id         text PRIMARY KEY,               -- 'ach@3'
+  subtype    cash_subtype NOT NULL,
+  version    smallint     NOT NULL,
+  state      text         NOT NULL CHECK (state IN ('draft','active','retired')),
+  created_at timestamptz  NOT NULL DEFAULT now(),
+  UNIQUE (subtype, version)
+);
+CREATE UNIQUE INDEX uq_one_active_def ON workflow_definition (subtype)
+  WHERE state = 'active';
+
+CREATE TABLE workflow_step_definition (
+  definition_id   text     NOT NULL REFERENCES workflow_definition(id),
+  seq             smallint NOT NULL,
+  step_kind       text     NOT NULL,
+  on_failure      text     NOT NULL CHECK (on_failure IN
+                    ('retry','fail','compensate','skip')),
+  max_attempts    smallint NOT NULL DEFAULT 5,
+  backoff_seconds integer  NOT NULL DEFAULT 30,
+  timeout_seconds integer,
+  config          jsonb    NOT NULL DEFAULT '{}',
+  PRIMARY KEY (definition_id, seq)
+);
+
+CREATE TABLE workflow_run (
+  redemption_id     uuid PRIMARY KEY REFERENCES cash_redemption(id),
+  definition_id     text NOT NULL REFERENCES workflow_definition(id),  -- pinned at start
+  current_seq       smallint NOT NULL DEFAULT 1,
+  run_state         text NOT NULL CHECK (run_state IN
+                      ('running','waiting','compensating','done','failed')),
+  next_run_at       timestamptz NOT NULL DEFAULT now(),
+  lease_owner       text,
+  lease_expires_at  timestamptz,
+  updated_at        timestamptz NOT NULL DEFAULT now()
+);
+-- the worker's only hot query
+CREATE INDEX ix_run_due ON workflow_run (next_run_at)
+  WHERE run_state IN ('running','waiting','compensating');
+
+CREATE TABLE workflow_step (             -- append-only attempt log
+  id             bigserial PRIMARY KEY,
+  redemption_id  uuid     NOT NULL REFERENCES cash_redemption(id),
+  seq            smallint NOT NULL,
+  step_kind      text     NOT NULL,
+  attempt        smallint NOT NULL,
+  state          text     NOT NULL,      -- in_progress|succeeded|failed|skipped|compensated
+  idempotency_key text    NOT NULL,
+  started_at     timestamptz NOT NULL DEFAULT now(),
+  finished_at    timestamptz,
+  error_code     text,
+  error_detail   text,
+  output         jsonb,
+  UNIQUE (redemption_id, seq, attempt)
+);
+
+CREATE TABLE outbox (
+  id            bigserial PRIMARY KEY,
+  aggregate_id  uuid  NOT NULL,
+  partition_key text  NOT NULL,          -- = aggregate_id: per-order ordering on SNS FIFO
+  event_type    text  NOT NULL,          -- 'redemption.status.changed'
+  schema_version text NOT NULL,          -- Published Language version
+  payload       jsonb NOT NULL,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  published_at  timestamptz,
+  attempts      smallint NOT NULL DEFAULT 0
+);
+CREATE INDEX ix_outbox_pending ON outbox (id) WHERE published_at IS NULL;
+
+CREATE TABLE inbox (                     -- idempotent consumer for rail callbacks
+  message_id  text PRIMARY KEY,
+  source      text NOT NULL,
+  payload     jsonb NOT NULL,
+  received_at timestamptz NOT NULL DEFAULT now(),
+  processed_at timestamptz
+);
+
+CREATE TABLE api_idempotency (
+  requesting_client   text,
+  idempotency_key     text,
+  request_fingerprint text     NOT NULL,   -- rejects key reuse with a different body
+  redemption_id       uuid     NOT NULL REFERENCES cash_redemption(id),
+  response_status     smallint NOT NULL,
+  response_body       jsonb    NOT NULL,
+  created_at          timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (requesting_client, idempotency_key)
+);
+Listing 4 — Workflow and integration tables. workflow_run.definition_id is pinned when the order starts, so a recipe change never re-sequences an in-flight order.
+6.7 Hot queries, indexes and growth
+Query	Frequency	Access path
+Claim due workflow runs	Every worker tick	ix_run_due + FOR UPDATE SKIP LOCKED LIMIT n
+Load one aggregate by id	Per step, per API read	PK on root + PK joins on satellite, hold, run
+Member's redemption history	Per app session	ix_cr_member
+Idempotent intake	Per write	uq_cr_idem / api_idempotency PK
+Match rail callback to disbursement	Per callback	Unique index on (rail, external_ref)
+Unpublished outbox rows	Every publisher tick	ix_outbox_pending
+Ops: unsettled ACH over threshold, aged	Ad hoc + daily	ix_cr_open + join cr_ach
+Daily reconciliation against rail files	Daily batch	ix_disb_open, read replica
+Growth and partitioning. The root and satellites stay unpartitioned — they are small and carry the unique constraints that make consolidation safe. The append-only tables (workflow_step, disbursement_event, outbox, audit_log) are range-partitioned monthly and detached to cold storage on a schedule: 13 months hot for operational tables, 7 years archived for anything that evidences a financial decision. Published outbox rows are pruned after 7 days.
+
+6.8 Options — where workflow state lives ADR-6 · open
+As drafted, an order's progress is recorded in two writable places: cash_redemption.status (the domain's state machine) and workflow_run.run_state + current_seq (the engine's). That is two sources of truth for one question — where is this order? — kept in agreement by discipline rather than by structure. Worth reconsidering before build.
+
+Option	Consequence	Verdict
+A — Separate workflow_run table (as drafted in Listing 4)	The engine's schema is self-contained and could be lifted into a shared module for other channels. Every step's outcome transaction writes two tables; status and current_seq can drift.	Viable, and the right shape if ADR-9 resolves toward a shared engine early.
+B — Fold the run columns into cash_redemption: recipe_version, current_seq, next_run_at, lease_owner, lease_expires_at	One row, one optimistic-lock version, one due-work index. Drift becomes unrepresentable rather than avoided. The polling index moves onto the primary table — immaterial at 4 orders/sec.	Recommended. The run is 1:1 with the order, never queried without it, and always written in the same transaction.
+C — Run state in a separate store (DynamoDB, queue visibility timeouts)	Cheap timers and leases; loses the transactional coupling between progress and the order.	Rejected. A step outcome that commits progress but not the aggregate is exactly the failure this design spends its complexity to prevent.
+Paired with ADR-7: under option B, status stops being independently settable. Each recipe step declares the canonical status it enters (enters_status, §7.8), and the worker writes current_seq and status in the same statement — so status has exactly one writer and cannot disagree with progress. Step history stays append-only and is renamed redemption_step, since it was always the order's own log (Steps []StepExecution in §7.2) rather than an engine artefact.
+
+7. Low-level design — Go
+7.1 Package layout
+cash-redemption-svc/
+  cmd/{api,worker,ingest}/main.go
+  internal/
+    domain/          redemption.go  status.go  instruction.go  hold.go
+                     disbursement.go  reversal.go  events.go  errors.go
+    app/
+      command/       request_redemption.go  cancel_redemption.go  ingest_rail_event.go
+      engine/        runner.go  registry.go  step.go  lease.go  compensate.go
+      steps/         validate.go  match_transactions.go  verify_instrument.go
+                     eligibility.go  place_hold.go  submit_disbursement.go
+                     await_confirmation.go  settle_hold.go  notify.go  reverse.go
+    adapters/
+      rail/dda/  rail/cardproc/  rail/ach/  rail/checkvendor/
+      ledger/  eligibility/  notification/
+      postgres/      redemption_repo.go  run_repo.go  outbox.go  migrations/
+      sns/
+    platform/        idem/  clock/  money/  telemetry/  config/
+internal/domain imports nothing outside the standard library. internal/app/steps is the only place that may call an adapter. A rail's vocabulary — SEC codes, cycle identifiers, void windows — never appears above adapters/rail/*.
+
+7.2 Domain types
+package domain
+
+type Subtype string
+
+const (
+    AccountCredit   Subtype = "account_credit"
+    StatementCredit Subtype = "statement_credit"
+    PurchaseEraser  Subtype = "purchase_eraser"
+    ACH             Subtype = "ach"
+    Check           Subtype = "check"
+)
+
+// Redemption is the aggregate root for every cash redemption type.
+type Redemption struct {
+    ID        ID
+    Subtype   Subtype
+    Status    Status
+    Version   int
+
+    Member    MemberRef
+    Points    Points
+    Cash      Money
+    Rate      Rate
+
+    Instruction   Instruction     // polymorphic value object, immutable after intake
+    Hold          *Hold           // at most one active (I1)
+    Disbursements []Disbursement  // newest last; reissues chain via Supersedes
+    Steps         []StepExecution // append-only
+    Decision      *EligibilityDecision
+    Reversals     []Reversal
+
+    Origin    Origin
+    events    []Event             // uncommitted, drained by the repository
+}
+
+// Instruction is the single point of subtype polymorphism in the domain.
+type Instruction interface {
+    Subtype() Subtype
+    Rail() RailID
+    Validate() error
+    // Fingerprint feeds deterministic idempotency keys; must not include
+    // timestamps, attempt counters or anything non-deterministic.
+    Fingerprint() string
+}
+
+type AchInstruction struct {
+    ExtAccountToken string
+    RoutingLast4    string
+    AccountLast4    string
+    AccountType     AccountType
+    SECCode         string
+}
+
+func (AchInstruction) Subtype() Subtype { return ACH }
+func (AchInstruction) Rail() RailID     { return RailACH }
+Adding a sixth cash type is: one Instruction implementation, one satellite table, one rail adapter, one workflow definition row set. No change to Redemption, the engine, the status model, or the event contract.
+
+7.3 Behaviour on the aggregate
+// PlaceHold records a confirmed ledger hold. Enforces I1 and I2.
+func (r *Redemption) PlaceHold(h Hold) error {
+    if r.Status != StatusAuthorizing {
+        return ErrInvalidTransition{From: r.Status, Op: "place_hold"}
+    }
+    if r.Hold != nil && r.Hold.IsActive() {
+        return ErrHoldAlreadyActive
+    }
+    r.Hold = &h
+    r.transition(StatusAuthorized)
+    r.raise(PointsHeld{RedemptionID: r.ID, Points: h.Points, Ref: h.LedgerRef})
+    return nil
+}
+
+// Settle converts the hold to a permanent debit. Terminal for the happy path (I2, I7).
+func (r *Redemption) Settle(at time.Time) error {
+    if r.Hold == nil || r.Hold.State != HoldHeld {
+        return ErrNoSettleableHold
+    }
+    if !r.Status.In(StatusFulfilling, StatusAwaitingSettlement) {
+        return ErrInvalidTransition{From: r.Status, Op: "settle"}
+    }
+    r.Hold.State, r.Hold.SettledAt = HoldSettled, &at
+    r.transition(StatusCompleted)
+    r.raise(PointsSettled{RedemptionID: r.ID, Points: r.Points})
+    r.raise(RedemptionFulfilled{RedemptionID: r.ID, Subtype: r.Subtype})
+    return nil
+}
+
+// Reverse applies a post-settlement correction. Never a rollback: a new
+// compensating ledger entry, and the original settlement stays on the record.
+func (r *Redemption) Reverse(rv Reversal) error {
+    if r.Status != StatusCompleted && r.Status != StatusReversed {
+        return ErrInvalidTransition{From: r.Status, Op: "reverse"}
+    }
+    r.Reversals = append(r.Reversals, rv)
+    r.transition(StatusReversed)
+    r.raise(RedemptionReversed{RedemptionID: r.ID, Trigger: rv.Trigger, Code: rv.RailCode})
+    return nil
+}
+
+func (r *Redemption) transition(to Status) {
+    if !allowed[r.Status][to] {            // table-driven, mirrors §5.1
+        panic("illegal transition escaped a guard: " + string(r.Status) + "->" + string(to))
+    }
+    r.Status = to
+}
+7.4 Ports
+// One rail, one adapter. Every method is idempotent on idemKey.
+type DisbursementAdapter interface {
+    Rail() domain.RailID
+    Submit(ctx context.Context, r *domain.Redemption, idemKey string) (SubmitResult, error)
+    // Reconcile answers "what happened to this attempt?" after an unknown outcome.
+    Reconcile(ctx context.Context, ref domain.ExternalRef) (RailState, error)
+    Void(ctx context.Context, ref domain.ExternalRef, reason string) error
+    // Capabilities lets the engine, not the caller, know whether cancellation
+    // and reissue are possible for this rail.
+    Capabilities() RailCapabilities
+}
+
+type LedgerGateway interface {
+    PlaceHold(ctx context.Context, in HoldRequest) (HoldResult, error)
+    SettleHold(ctx context.Context, ref domain.LedgerRef, idemKey string) error
+    ReleaseHold(ctx context.Context, ref domain.LedgerRef, reason, idemKey string) error
+    RestorePoints(ctx context.Context, in RestoreRequest) (domain.LedgerRef, error)
+}
+
+type EligibilityClient interface {
+    Decide(ctx context.Context, in DecisionRequest) (domain.EligibilityDecision, error)
+}
+
+type Repository interface {
+    // Load returns the whole aggregate: root, satellite, hold, disbursements, steps.
+    Load(ctx context.Context, id domain.ID) (*domain.Redemption, error)
+    // Save persists the aggregate, its step outcome and its outbox rows in ONE
+    // transaction, failing on a version mismatch (I8).
+    Save(ctx context.Context, r *domain.Redemption, step StepOutcome) error
+}
+7.5 The step engine
+type StepKind string
+
+type StepHandler interface {
+    Kind() StepKind
+    Execute(ctx context.Context, sc *StepContext) (StepOutcome, error)
+    Compensate(ctx context.Context, sc *StepContext) error
+}
+
+type Result int
+const (
+    Advance Result = iota // move to next seq
+    Wait                  // park until WaitUntil or an ingested event wakes us
+    Fail                  // per definition: fail or compensate
+    Skip                  // not applicable to this order
+)
+
+type StepOutcome struct {
+    Result    Result
+    WaitUntil time.Time
+    Output    map[string]any
+    Status    *domain.Status // set when this step changes canonical status
+}
+
+// StepContext is what a handler is allowed to touch: the aggregate, the step's
+// definition config, and a deterministic idempotency key for its side effect.
+type StepContext struct {
+    Redemption *domain.Redemption
+    Def        StepDefinition
+    IdemKey    string
+    Now        time.Time
+}
+7.6 Worker loop and transaction boundaries
+func (w *Worker) tick(ctx context.Context) error {
+    runs, err := w.runs.ClaimDue(ctx, w.id, w.batchSize, w.leaseFor) // SKIP LOCKED
+    if err != nil { return err }
+    for _, run := range runs {
+        w.pool.Go(func() { w.executeOne(ctx, run) })
+    }
+    return nil
+}
+
+func (w *Worker) executeOne(ctx context.Context, run Run) {
+    r, err := w.repo.Load(ctx, run.RedemptionID)
+    if err != nil { w.runs.Reschedule(ctx, run, backoff(run)); return }
+
+    def := w.defs.Step(run.DefinitionID, run.CurrentSeq)  // pinned definition
+    h   := w.registry.For(def.StepKind)
+    sc  := &StepContext{Redemption: r, Def: def, Now: w.clock.Now(),
+        IdemKey: IdemKey(r.ID, def.Seq, def.StepKind)}    // deterministic: no attempt no.
+
+    // TX 1 — intent. Records that we are about to cause a side effect, so a crash
+    // mid-call is recoverable and never re-submits under a new key (I4).
+    if err := w.repo.RecordAttempt(ctx, r.ID, def, sc.IdemKey); err != nil { return }
+
+    out, err := h.Execute(ctx, sc)      // the only place a side effect happens
+
+    // TX 2 — outcome. Aggregate mutation + step row + outbox rows + run advance,
+    // committed atomically on the optimistic-lock version.
+    switch {
+    case err == nil:
+        w.repo.Save(ctx, r, out)
+    case errors.Is(err, ErrUnknownOutcome):
+        w.runs.Reschedule(ctx, run, reconcileDelay)   // Reconcile() decides next tick
+    case isRetryable(err) && run.Attempt < def.MaxAttempts:
+        w.repo.SaveFailure(ctx, r, err, backoff(def, run.Attempt))
+    default:
+        w.compensator.Start(ctx, r, err)              // walks executed steps backwards
+    }
+}
+Boundary	Contents	Why it is drawn here
+API intake (1 tx)	Root + satellite + api_idempotency + workflow_run + first outbox row	The order exists and is durable before the caller gets a 202; nothing has moved.
+Step intent (1 tx)	workflow_step row in in_progress with its idempotency key	A crash between intent and outcome leaves a recoverable record with the same key — the retry cannot become a second payment.
+Step outcome (1 tx)	Aggregate mutation + step row + hold/disbursement rows + outbox + run advance	Status and its event are never out of step (I9); the version check serialises concurrent writers.
+Rail callback (1 tx)	inbox row + disbursement_event + aggregate mutation + outbox	Duplicate rail deliveries collapse on the inbox primary key.
+Publisher (no aggregate tx)	Read pending outbox, publish, mark published	At-least-once outward; consumers dedupe on event id. Ordering per order preserved by partition_key.
+7.7 A rail adapter, concretely
+package ach
+
+// Submit stages one NACHA entry. ACH is file-based, so "submitted" means
+// "staged into the next window's batch" — the engine only learns of settlement
+// through an ingested acknowledgement.
+func (a *Adapter) Submit(ctx context.Context, r *domain.Redemption,
+    idemKey string) (rail.SubmitResult, error) {
+
+    ins, ok := r.Instruction.(domain.AchInstruction)
+    if !ok { return rail.SubmitResult{}, rail.ErrWrongInstruction }
+
+    entry := nacha.Entry{
+        SECCode:       ins.SECCode,
+        RoutingToken:  ins.ExtAccountToken,
+        AmountMinor:   r.Cash.Minor,
+        TraceSeed:     idemKey,            // dedupe key on the origination side
+        EffectiveDate: a.cal.NextEntryDate(a.clock.Now()),
+    }
+    res, err := a.originator.Stage(ctx, entry)   // idempotent on TraceSeed
+    if err != nil { return rail.SubmitResult{}, rail.Classify(err) }
+
+    return rail.SubmitResult{
+        ExternalRef: domain.ExternalRef(res.TraceNumber),
+        State:       rail.StateSubmitted,
+        // Drives watch_reversal_window; ACH returns can arrive days after settlement.
+        ReversalDeadline: a.cal.AddBusinessDays(res.EffectiveDate, 5),
+    }, nil
+}
+
+func (a *Adapter) Capabilities() rail.RailCapabilities {
+    return rail.RailCapabilities{
+        Voidable:        true,   // only before the file window closes
+        AsyncSettlement: true,
+        Reissuable:      false,
+        ReturnCodes:     true,
+    }
+}
+7.8 Options — how the step recipe is expressed ADR-5 · open
+The recipe is the mechanism that lets five different process orders share one engine (§5.3), so how it is authored, reviewed, versioned and shipped is a first-order decision — not a storage detail. Four options.
+
+Option	Change without deploy?	Consequence	Verdict
+A — Database definition tables (as drafted in Listing 4)	Yes, by SQL or an admin tool	Rows nothing joins to, seeded by migration, edited outside code review. A typo in step_kind is discovered at runtime. To be safe in a regulated estate it needs an admin UI, a maker–checker approval flow and its own audit trail — none of which is built.	Only justified if a non-engineer genuinely authors recipes. Nobody does.
+B — Declarative config in the repo, delivered by AWS AppConfig	Yes — config deployment, no rebuild	One YAML file per recipe version, reviewed in a pull request, schema-validated in CI and at load. Staged rollout and instant rollback come from AppConfig deployment strategies. Two artefacts (config + handlers) must be kept in step, which the startup validation gate below enforces.	Recommended. Config-driven where it pays — changeable without a build, versioned and reviewed like code, and typo-proof before it reaches an order.
+C — Go declaration in code	No — requires a deploy	Type-safe, one artefact, reviewed alongside the handler it names. Retired versions live in a map until in-flight orders drain.	Strong fallback. Choose this if the team would rather not operate AppConfig; the cost is a deploy per recipe change.
+D — External engine definition (Step Functions ASL, Temporal workflow)	Yes, per state-machine version	Retries, timers and visibility arrive for free. But workflow state leaves the service's database — a second source of truth, a second audit trail, and a direct conflict with database-per-channel.	Rejected for the lifecycle. Reasonable later for timers only if scheduler cost becomes a real problem.
+# recipes/ach.v3.yaml — reviewed in a PR, shipped by AppConfig,
+# pinned on the order as recipe_version "ach@3" at intake.
+recipe: ach
+version: 3
+state: active                      # draft | active | retired
+steps:
+  - seq: 1
+    kind: validate_request
+    enters_status: received
+    on_failure: fail
+
+  - seq: 2                         # ACH verifies the destination BEFORE any hold:
+    kind: verify_instrument        # an unverifiable account must never freeze points
+    enters_status: authorizing
+    on_failure: fail
+    config: { verification: prenote, accept_cached_within: 90d }
+
+  - seq: 3
+    kind: check_eligibility
+    on_failure: fail
+    config: { rule_pack: cash_ach_v2 }
+
+  - seq: 4
+    kind: place_hold
+    enters_status: authorized
+    on_failure: fail
+    compensate: release_hold
+
+  - seq: 5
+    kind: submit_disbursement
+    enters_status: fulfilling
+    on_failure: compensate
+    compensate: void_disbursement  # only while the file window is open
+    max_attempts: 3
+    backoff: 60s
+
+  - seq: 6
+    kind: await_rail_confirmation
+    enters_status: awaiting_settlement
+    timeout: 72h
+    on_timeout: escalate_ops       # never auto-fail after money has moved
+
+  - seq: 7
+    kind: settle_hold
+    enters_status: completed
+    on_failure: retry_forever_alert
+
+  - seq: 8
+    kind: notify_member
+    on_failure: skip               # a failed notification must not fail a redemption
+
+  - seq: 9
+    kind: watch_reversal_window
+    window_from: rail_settlement
+    window: 5bd                    # ACH return deadline
+Listing 5 — One recipe as declarative config. The five recipes differ only in this file; the engine, the status model, the retry machinery and the event contract are identical across all of them.
+Validation gate — what makes config-driven safe
+Rule	Enforced	Failure mode it removes
+Every kind resolves in the Go step registry	CI + service startup	A recipe naming a handler that does not exist. The service refuses to start rather than stalling one order at step 4.
+Every enters_status is a legal transition from the previous step's status	CI, against the §5.1 table	Config inventing a status path the domain state machine will reject at runtime.
+Any step with an irreversible side effect declares compensate or is explicitly marked terminal	CI	A saga that cannot unwind because one step forgot its inverse.
+Each config block validates against its handler's own schema	CI + load	A rule pack or window value the handler will not understand.
+A version is immutable once any order has pinned it	CI check against a published-version manifest	An in-flight order's recipe changing underneath it — the single worst failure available in a config-driven design.
+Exactly one active version per recipe	CI + load	Ambiguity about what a new order should pin.
+Why this also answers ADR-9. A recipe file plus a step-kind registry is a contract, not a service. If Gift Card or Miles later want the same machinery, they adopt the file format and the step vocabulary and keep their own database — which is precisely the additive path from today's choreography to a shared engine, with no rewrite and no central runtime dependency in between.
+
+8. Interfaces
+8.1 Command and query API
+Operation	Style	Semantics
+POST /v2/redemption	REST, sync	Accepts any cash type. Returns 202 with order id and status received. Requires Idempotency-Key. Never blocks on a rail.
+GET /v2/redemption/{id}	REST	Cash's own view of one order, including step timeline. Cross-channel reads go to redemption-status-svc.
+POST /v2/redemption/{id}/cancel	REST	Best-effort; succeeds only while the rail attempt is voidable. Returns 409 with current status otherwise.
+POST /v2/redemption/quote	REST	Conversion rate + a dry-run eligibility read. Advisory: the rate is re-frozen at acceptance.
+CashRedemption.Request / Get / Cancel	gRPC	Same operations for internal callers; the REST edge is a thin translation of these.
+POST /ops/redemption/{id}/reverse	REST, dual-control	Operator-initiated reversal. Requires two distinct approver identities; written to audit_log.
+POST /v2/redemption
+Idempotency-Key: 8f2c1e6a-...           # client-generated, required
+{
+  "type": "ach",                         # account_credit|statement_credit|
+                                         # purchase_eraser|ach|check
+  "memberId": "m_8812...",
+  "loyaltyAccountId": "la_4471...",
+  "points": 25000,
+  "instruction": {                       # shape is subtype-specific, validated
+    "externalAccountToken": "eat_9f...", # against the instruction schema
+    "accountType": "checking"
+  },
+  "originChannel": "mobile"
+}
+
+202 Accepted
+{ "redemptionId": "rdm_01HZ...", "type": "ach", "status": "received",
+  "cashAmount": { "currency": "USD", "minor": 25000 },
+  "conversionRate": "0.010000", "statusUrl": "/v2/redemption/rdm_01HZ..." }
+8.2 Idempotency contract
+Case	Behaviour
+Same key, same body	200 with the stored response. No new order.
+Same key, different body	422 idempotency_key_reuse. Fingerprint mismatch is a client bug, not a retry.
+Concurrent duplicate	One wins on uq_cr_idem; the loser reads and returns the winner's response.
+No key supplied	400. Money-moving commands are never accepted without one.
+Internal side effects	Deterministic key: hash(redemptionID, stepSeq, stepKind) — no attempt counter, so every retry presents the identical key to the ledger and the rail.
+8.3 Published event
+One event type carries the cross-channel status contract. It is deliberately identical in shape to what Gift Card, Shop with Points and Miles publish — that shared shape is the only thing that keeps a choreographed estate coherent, and it is what makes a later move to a shared engine additive rather than a rewrite.
+
+{
+  "eventId": "evt_01HZ...",              // consumer dedupe key
+  "eventType": "redemption.status.changed",
+  "schemaVersion": "1.0",
+  "occurredAt": "2026-03-11T14:22:08Z",
+  "channel": "cash",                     // cash|gift_card|shop_with_points|miles
+  "redemptionType": "ach",
+  "redemptionId": "rdm_01HZ...",
+  "memberId": "m_8812...",
+  "status": "awaiting_settlement",       // canonical, shared vocabulary
+  "currentStep": "await_rail_confirmation",
+  "points": 25000,
+  "cashAmount": { "currency": "USD", "minor": 25000 },
+  "reasons": [],                         // decline / failure / return codes
+  "expectedBy": "2026-03-13T00:00:00Z",  // subtype-derived, powers member messaging
+  "correlationId": "cor_01HZ..."
+}
+8.4 Legacy facade mapping
+Existing callers keep their endpoints; the facade translates and carries no business logic.
+
+Legacy endpoint (unchanged)	New call	Nano-services retired
+POST /ach/initiate, /ach/validate, /ach/post	POST /v2/redemption type=ach	ach-init, ach-validate, ach-post
+POST /statement-credit/initiate, /post	type=statement_credit	statement-credit-init, statement-credit-post
+POST /purchase-eraser/match, /apply	type=purchase_eraser (match becomes step 2)	purchase-eraser-match, purchase-eraser-apply
+POST /account-credit/post	type=account_credit	account-credit-post
+POST /check/issue	type=check	check-issue
+POST /cash-eligibility/*	internal check_eligibility step → eligibility-svc	cash-eligibility-*
+POST /cash/ledger-hold	internal place_hold step → ledger-gateway-svc	cash-ledger-hold
+9. Reference flows
+9.1 ACH — happy path
+#	Actor	Action	Status after	Persisted
+1	api	Validate, freeze rate, create order + run, return 202	received	root, satellite, run, outbox
+2	worker	validate_request, verify_instrument (account token verified)	authorizing	step rows, cr_ach.verified_at
+3	worker → eligibility	check_eligibility — approved, decision snapshotted	authorizing	eligibility_decision
+4	worker → ledger gw	place_hold 25,000 pts	authorized	ledger_hold held, outbox
+5	worker → ACH rail	submit_disbursement — entry staged, trace number returned	fulfilling	disbursement submitted
+6	worker	await_rail_confirmation — run parked	awaiting_settlement	run waiting
+7	ingest	Settlement acknowledgement file consumed, run woken	awaiting_settlement	inbox, disbursement_event
+8	worker → ledger gw	settle_hold — points permanently debited	completed	hold settled, outbox
+9	worker	notify_member, then watch_reversal_window until deadline	completed	step rows
+9.2 ACH — return after settlement (R01, insufficient funds at the receiving bank)
+#	Actor	Action	Status after	Persisted
+1	ingest	Return file with code R01 for a trace number; matched to disbursement	completed	inbox, disbursement_event, disbursement returned
+2	worker	watch_reversal_window wakes, opens a reverse step	completed	reversal pending
+3	worker → ledger gw	RestorePoints — a new compensating entry, not a rollback of the settlement	reversed	reversal completed, outbox
+4	worker	Notify with the return reason; order stays terminal	reversed	step rows, audit_log
+The audit trail deliberately shows both movements — a debit that settled and a restoration that followed — because the member's statement and the ledger must agree on what actually happened, not on a tidied-up net.
+
+9.3 Purchase Eraser — matching before eligibility
+#	Actor	Action	Status after	Persisted
+1	api	Order accepted with a requested cash amount and card token	received	root, cr_purchase_eraser
+2	worker	match_transactions — posted transactions in the window filtered by rule pack, rows reserved (I5)	authorizing	erased_transaction rows, matched_total
+3	worker	Matched total below request → amount reduced to matched total, or failed if zero (I6)	authorizing	root amount, step output
+4	worker → eligibility	check_eligibility judges the final amount	authorizing	eligibility_decision
+5	worker	place_hold, then card-processor statement adjustment	fulfilling	hold, disbursement
+6	ingest	Posting confirmation for the cycle	awaiting_settlement	disbursement_event
+7	worker	settle_hold, notify	completed	hold settled, outbox
+If matching fails midway, compensation releases the reserved transaction rows (released_at set) so the same purchases become erasable again — the one subtype-specific compensation in the estate, and it lives in one step handler.
+
+10. Non-functional design
+10.1 Capacity — stated assumptions
+The volume figure available is value, not count: approximately $900M of annual cash redemption, Account Credit dominant. Counts below are derived and must be confirmed before sizing is committed (§12, OQ-5).
+
+Assumption	Value	Consequence
+Annual cash redemption value	$900M	Given
+Average ticket (Account Credit weighted)	$60–$100	Assumed — the single figure most worth replacing with real data
+Derived annual order count	9M–15M	≈ 0.3–0.5 orders/sec average
+Peak-to-average ratio	8× (statement-cycle and campaign peaks)	Peak ≈ 4 orders/sec sustained, design headroom 50/sec
+Steps per order	7–9	Peak ≈ 450 step executions/sec at design headroom
+Rows per order (all tables)	≈ 20	≈ 300M rows/year across append-only tables → monthly partitions
+The conclusion that matters: this is a low-throughput, high-value workload. A single Aurora writer with a polling worker fleet is comfortably sufficient — the design effort belongs in correctness, auditability and reversal handling, not in throughput engineering. That is also why a database-backed engine is preferred over a hosted workflow product: at 4 orders/sec the operational simplicity of one Aurora cluster outweighs the elasticity of anything larger.
+
+10.2 Correctness, security, observability
+Concern	Design
+Exactly-once money effect	Achieved as at-least-once delivery plus deterministic idempotency keys plus intent-first writes. No step performs two side effects; every rail and ledger call dedupes on a key derived only from (order, step).
+Concurrency	One lease per run, one in-flight step per order, optimistic version on the root. Two workers cannot advance the same order.
+Ordering	Outbox partition_key = redemptionId on a FIFO topic: consumers see one order's statuses in sequence, without global ordering.
+Audit	Every status change, decision and money movement is an append-only row with actor attribution. 7-year retention on the financial subset; operator reversals require dual control.
+PCI / PII	Only vault tokens and last-4 fragments are stored — no PAN, no full account or routing number. Satellite tables are the only place instrument data lives, encrypted at rest, field-level masked in logs and in every event payload.
+Reconciliation	Daily three-way tie-out: disbursement vs rail settlement file vs ledger settlement entries. Breaks land in an ops queue with the order id; the reconciler never mutates orders directly.
+SLOs	Intake p99 < 300ms. Account Credit request-to-completed p95 < 60s. Status event published within 5s of a status change, p99. Zero tolerance on unsettled-after-disbursement beyond 24h — page.
+DR	Multi-AZ Aurora, cross-region snapshot replication. RPO 5 min, RTO 1 hour. Recovery is safe because replay is idempotent: a re-executed step presents the same key and the rail refuses the duplicate.
+11. Build and migration sequence
+Phase	Delivers	Exit criterion
+0	Schema, aggregate, step engine, outbox, status events — with one subtype and one rail wired end to end behind a feature flag.	A single Purchase Eraser order completes through the new path in a lower environment, event published and consumed by redemption-status-svc.
+1	Purchase Eraser live behind the legacy facade — narrowest rule set, cleanest matching semantics, and it exercises the interesting ordering case.	5% → 50% → 100% of one client's Purchase Eraser traffic on the new path, reconciliation clean for 10 business days.
+2	Account Credit — the volume type. Synchronous rail, no waiting step, so it proves the engine at real load.	Peak-day traffic served on the new path; legacy account-credit-post receives no traffic.
+3	Statement Credit — first cycle-boundary settlement.	Two full statement cycles reconciled with no manual intervention.
+4	ACH — first return-handling path, first watch_reversal_window.	Deliberate return-code drills (R01/R02/R03) reverse correctly end to end.
+5	Check — void/reissue and staleness.	Void, reissue and stale-check paths exercised; escheatment rules confirmed with Compliance.
+6	Facade retirement per subtype, nano-service decommissioning, cost/CVE reduction reported.	11 repos archived; Fargate baseline and patch surface measured against the pre-migration figure.
+Ordering rationale: Purchase Eraser first proves the hard modelling claim (per-subtype ordering on a shared spine) at low volume; Account Credit second proves the throughput and money-critical claim at high volume. Doing them in the reverse order would put the largest dollar flow on an unproven engine.
+
+12. Open questions for sign-off
+#	Question	Owner / needed by
+OQ-1	Settlement timing per subtype (§5.5) — do points settle on rail submission or on rail settlement? This determines whether a member can see points gone while cash is still in flight.	Finance + Product · before Phase 0
+OQ-2	Purchase Eraser matching source: posted transactions only, or authorised-but-unposted too? Changes the matching step's data source and the reversal exposure.	Card platform · before Phase 1
+OQ-3	Reversal policy when restored points would exceed a member's current tier or expiry boundary — restore as-is, or restore with original expiry?	Loyalty product + Ledger · before Phase 4
+OQ-4	Check staleness and unclaimed-property handling: void-and-reissue by default, or reverse to points after N days?	Compliance · before Phase 5
+OQ-5	Real order counts and average ticket per subtype, to replace the derived figures in §10.1.	Data · before Phase 2 sizing
+OQ-6	Does the step engine get extracted as a shared internal Go module once a second channel wants it, or stay private to Cash? Affects package boundaries now, not later.	Platform + channel leads · before Phase 2
+OQ-7	Partial redemption and split tender (points + cash on one order) — in scope for this service, or a separate concern?	Product · before Phase 0
+OQ-8	ADR-4 — satellite tables per subtype, or one table with discriminator-guarded CHECK constraints and rail progress moved onto disbursement? Recommendation is the latter (§6.1).	Cash team + DBA · before Phase 0
+OQ-9	ADR-5 — recipes as database rows, repo config shipped by AppConfig, or Go declarations? Recommendation is config with a CI validation gate (§7.8). Also decides whether AppConfig becomes a runtime dependency.	Cash team + Platform · before Phase 0
+OQ-10	ADR-6/ADR-7 — fold workflow run state into the order row and make status derived from recipe position? Recommendation is yes (§6.8); it is cheap now and a migration later.	Cash team · before Phase 0
+Patterns and vocabulary per Evans, Domain-Driven Design (bounded context, ubiquitous language, aggregate) · Vernon, Implementing Domain-Driven Design (Open Host Service, Published Language, Anticorruption Layer, Conformist, Partnership) · Newman, Monolith to Microservices (Strangler Fig, decompose by subdomain) · Richardson, microservices.io (Saga, Transactional Outbox, Database per Service) · Fowler, StranglerFigApplication.
+
+Draft for architecture review — internal
+cash-redemption-svc · Go / Fargate / A
